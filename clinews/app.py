@@ -246,6 +246,43 @@ def draw(stdscr: curses.window, y: int, x: int, text: str, width: int, attr: int
         pass
 
 
+def logo_colors() -> dict[str, int]:
+    if not curses.has_colors():
+        return {}
+    curses.start_color()
+    try:
+        curses.use_default_colors()
+        background = -1
+    except curses.error:
+        background = curses.COLOR_BLACK
+    palette = (27, 15, 51, 214) if curses.COLORS >= 256 else (
+        curses.COLOR_BLUE, curses.COLOR_WHITE, curses.COLOR_CYAN, curses.COLOR_YELLOW)
+    colors = {}
+    for index, (letter, foreground) in enumerate(zip("BWCY", palette), 1):
+        curses.init_pair(index, foreground, background)
+        colors[letter] = curses.color_pair(index)
+    return colors
+
+
+def draw_logo(stdscr: curses.window, colors: dict[str, int]) -> None:
+    # O mesmo símbolo do PNG, simplificado em pixels para terminais comuns.
+    pixels = (
+        "         Y Y",
+        "   BBBB  YYY",
+        "  BBWWWB  YY",
+        "  BWWCWB   Y",
+        "  BWWWWB    ",
+        "  BBBBBB    ",
+    )
+    for row, line in enumerate(pixels, 1):
+        for col, pixel in enumerate(line, 1):
+            if pixel != " ":
+                try:
+                    stdscr.addstr(row, col, "█", colors.get(pixel, 0) | curses.A_BOLD)
+                except curses.error:
+                    pass
+
+
 def prompt(stdscr: curses.window, label: str) -> str:
     height, width = stdscr.getmaxyx()
     label = label[:max(1, width - 2)]
@@ -293,6 +330,7 @@ def reader(stdscr: curses.window, article: sqlite3.Row) -> None:
 def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
     curses.curs_set(0)
     stdscr.keypad(True)
+    colors = logo_colors()
     selected_feed = 0
     selected_article = 0
     pane = 0
@@ -316,12 +354,15 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
         selected_article = max(0, min(selected_article, len(articles) - 1))
         unread = db.execute("SELECT COUNT(*) FROM articles WHERE is_read=0").fetchone()[0]
         draw(stdscr, 0, 0, f" CLINEWS  ●  {unread} não lidas", width, curses.A_REVERSE | curses.A_BOLD)
-        expanded_header = height >= 14 and width >= 70
+        expanded_header = height >= 18 and width >= 70
         if expanded_header:
-            draw(stdscr, 1, 2, "  ▄▄▄▄▄", width - 4)
-            draw(stdscr, 2, 2, " ▐▣ ▣▣▌    C L I N E W S", width - 4, curses.A_BOLD)
-            draw(stdscr, 3, 2, " ▐▄▄▄▄▌    Notícias dos sites que você escolhe", width - 4)
-        heading_row = 5 if expanded_header else 2
+            draw_logo(stdscr, colors)
+            draw(stdscr, 2, 16, "C L I N E W S", width - 17, colors.get("C", 0) | curses.A_BOLD)
+            draw(stdscr, 4, 16, "Notícias dos sites que você escolhe", width - 17)
+        else:
+            draw(stdscr, 1, 1, "■", 1, colors.get("C", 0) | curses.A_BOLD)
+            draw(stdscr, 1, 3, "CLINEWS", width - 4, colors.get("C", 0) | curses.A_BOLD)
+        heading_row = 8 if expanded_header else 3
         first_row = heading_row + 1
         left = max(18, min(29, width // 3))
         draw(stdscr, heading_row, 1, "FONTES", left - 2, curses.A_BOLD)
