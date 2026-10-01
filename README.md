@@ -2,7 +2,7 @@
 
 ![Logo em pixel art do clinews](assets/clinews-logo.png)
 
-Prévia funcional de um leitor de notícias por RSS para o terminal. Você cola o endereço de um site uma vez; o `clinews` procura o feed RSS/Atom, salva a fonte e mostra as notícias no terminal.
+Prévia funcional de um leitor de notícias por RSS para o terminal. Na primeira abertura, você escolhe fontes sugeridas por assunto ou cola o endereço de um site. O `clinews` salva as fontes e mostra as notícias no terminal.
 
 O arquivo [assets/clinews-logo.png](assets/clinews-logo.png) é o logo e também o ícone do aplicativo. No terminal, o cabeçalho mostra uma versão colorida em pixels do mesmo símbolo. Em terminais sem suporte a cores, ela aparece em uma só cor.
 
@@ -23,8 +23,8 @@ O arquivo [assets/clinews-logo.png](assets/clinews-logo.png) é o logo e também
  Cultura               1    ● O céu desta semana
                             ● Livros para descobrir neste mês
 
- Cole um site com 'a' para começar.
- Tab painel   j/k mover   Enter ler   a adicionar   r atualizar   d remover   t temas   q sair
+ Pressione 's' para sugestões ou 'a' para colar um link.
+ Tab painel   j/k mover   Enter ler   s sugestões   a link   r atualizar   d remover   t temas   q sair
 ```
 
 ## Experimentar a prévia
@@ -44,7 +44,11 @@ python3 -m clinews
 
 Execute os comandos a partir de `~/Projetos/clinews`.
 
-Pressione `a` e cole a URL de um site ou do próprio feed. Se o site divulgar RSS/Atom na página, o endereço do feed é encontrado automaticamente. `r` busca notícias novas. `Tab` muda entre fontes e notícias; `j`/`k` ou as setas movem a seleção; `Enter` abre a notícia no leitor, com o link original ao final; `o` abre o link no navegador; `d` remove a fonte selecionada; `t` abre os temas; `q` sai.
+Na primeira abertura, aparece uma lista de fontes sugeridas. Use `j`/`k` ou as setas, `Espaço` para marcar quantas quiser e `Enter` para adicioná-las. A tecla `a` nessa tela abre o cadastro manual; `Esc` permite seguir sem adicionar nada. Nenhuma sugestão é cadastrada sem sua escolha. Depois, use `s` para reabrir a lista a qualquer momento. Fontes já cadastradas aparecem marcadas e não são adicionadas de novo.
+
+Para cadastrar um site próprio, pressione `a` e cole a URL do site ou do próprio feed. Se o site divulgar RSS/Atom na página, o endereço do feed é encontrado automaticamente. `r` busca notícias novas. `Tab` muda entre fontes e notícias; `j`/`k` ou as setas movem a seleção; `Enter` abre a notícia no leitor, com o link original ao final; `o` abre o link no navegador; `d` remove a fonte selecionada; `t` abre os temas; `q` sai.
+
+As sugestões incluem fontes em português e inglês de notícias, tecnologia, ciência, economia e cultura. Os endereços vêm das páginas das próprias fontes, como os [feeds da Agência Brasil](https://agenciabrasil.ebc.com.br/feed/), o [feed do Manual do Usuário](https://manualdousuario.net/acompanhe/) e os [feeds da NASA](https://www.nasa.gov/rss-feeds/). A disponibilidade de cada feed é conferida ao adicioná-lo; se um endereço deixar de funcionar, o app mostra o erro e continua com as outras fontes escolhidas.
 
 ## Temas
 

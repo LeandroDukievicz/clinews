@@ -18,6 +18,7 @@ from urllib.request import Request, urlopen
 from xml.etree import ElementTree as ET
 
 from .themes import THEMES, basic_color, load_theme, nearest_xterm, save_theme
+from .suggestions import SUGGESTIONS, Suggestion
 
 USER_AGENT = "clinews/0.1 (+terminal RSS reader)"
 ATOM = "{http://www.w3.org/2005/Atom}"
@@ -190,9 +191,10 @@ def store_articles(db: sqlite3.Connection, feed_id: int, articles: list[dict[str
     return db.total_changes - before
 
 
-def add_site(db: sqlite3.Connection, url: str) -> tuple[str, int]:
+def add_site(db: sqlite3.Connection, url: str, display_title: str | None = None) -> tuple[str, int]:
     url = checked_url(url)
     feed_url, title, articles = discover_feed(url)
+    title = display_title or title
     db.execute("INSERT OR IGNORE INTO feeds (site_url, feed_url, title) VALUES (?, ?, ?)", (url, feed_url, title))
     db.commit()
     feed_id = db.execute("SELECT id FROM feeds WHERE feed_url = ?", (feed_url,)).fetchone()["id"]
@@ -205,8 +207,8 @@ def refresh(db: sqlite3.Connection) -> tuple[int, list[str]]:
     for feed in db.execute("SELECT * FROM feeds ORDER BY id").fetchall():
         try:
             final_url, data, _ = get_url(feed["feed_url"])
-            title, articles = parse_feed(data, final_url)
-            db.execute("UPDATE feeds SET title = ?, feed_url = ? WHERE id = ?", (title, final_url, feed["id"]))
+            _, articles = parse_feed(data, final_url)
+            db.execute("UPDATE feeds SET feed_url = ? WHERE id = ?", (final_url, feed["id"]))
             added += store_articles(db, feed["id"], articles)
         except (ValueError, HTTPError, URLError, TimeoutError, OSError, sqlite3.IntegrityError) as exc:
             errors.append(f"{feed['title']}: {exc}")
@@ -367,6 +369,80 @@ def choose_theme(stdscr: curses.window, current: str) -> str:
             return current
 
 
+def choose_suggestions(stdscr: curses.window, db: sqlite3.Connection, styles: dict[str, int]) -> list[Suggestion] | str:
+    selected: set[int] = set()
+    cursor = 0
+    while True:
+        height, width = stdscr.getmaxyx()
+        subscribed = {url for feed in db.execute("SELECT site_url, feed_url FROM feeds")
+                      for url in (feed["site_url"], feed["feed_url"])}
+        stdscr.erase()
+        draw(stdscr, 0, 0, " CLINEWS  /  sugestões de fontes", width, styles["header"] | curses.A_BOLD)
+        draw(stdscr, 1, 1, "Escolha as fontes que quer acompanhar:", width - 2, styles["heading"])
+        visible = max(1, height - 5)
+        start = max(0, cursor - visible + 1)
+        for row, suggestion in enumerate(SUGGESTIONS[start:start + visible], 2):
+            index = start + row - 2
+            saved = suggestion.feed_url in subscribed
+            mark = "✓" if saved else "x" if index in selected else " "
+            label = f" [{mark}] {suggestion.title}  ·  {suggestion.category}  ·  {suggestion.language}"
+            attr = styles["selected"] if index == cursor else styles["muted"] if saved else styles["body"]
+            draw(stdscr, row, 1, label, width - 2, attr)
+        draw(stdscr, height - 2, 1, f"{len(selected)} selecionada(s)  ·  ✓ = já cadastrada", width - 2, styles["status"])
+        draw(stdscr, height - 1, 0, " j/k mover  Espaço marcar  Enter adicionar  a link manual  Esc voltar", width, styles["footer"])
+        stdscr.refresh()
+        key = stdscr.getch()
+        if key in (ord("j"), curses.KEY_DOWN):
+            cursor = min(len(SUGGESTIONS) - 1, cursor + 1)
+        elif key in (ord("k"), curses.KEY_UP):
+            cursor = max(0, cursor - 1)
+        elif key == ord(" ") and SUGGESTIONS[cursor].feed_url not in subscribed:
+            if cursor in selected:
+                selected.remove(cursor)
+            else:
+                selected.add(cursor)
+        elif key in (10, 13, curses.KEY_ENTER):
+            if not selected and SUGGESTIONS[cursor].feed_url not in subscribed:
+                selected.add(cursor)
+            return [SUGGESTIONS[index] for index in sorted(selected)]
+        elif key == ord("a"):
+            return "manual"
+        elif key in (27, ord("q")):
+            return []
+
+
+def add_manual(stdscr: curses.window, db: sqlite3.Connection, styles: dict[str, int]) -> str:
+    url = prompt(stdscr, " URL do site ou RSS: ", styles)
+    if not url:
+        return "Cadastro cancelado."
+    try:
+        title, count = add_site(db, url)
+        return f"{title}: {count} notícias adicionadas."
+    except (ValueError, HTTPError, URLError, TimeoutError, OSError) as exc:
+        return f"Erro: {exc}"
+
+
+def add_suggestions(stdscr: curses.window, db: sqlite3.Connection,
+                    styles: dict[str, int], selected: list[Suggestion]) -> str:
+    added = 0
+    articles = 0
+    errors = []
+    for index, suggestion in enumerate(selected, 1):
+        height, width = stdscr.getmaxyx()
+        draw(stdscr, height - 2, 1, f"Adicionando {index}/{len(selected)}: {suggestion.title}...", width - 2, styles["status"])
+        stdscr.refresh()
+        try:
+            _, count = add_site(db, suggestion.feed_url, suggestion.title)
+            added += 1
+            articles += count
+        except (ValueError, HTTPError, URLError, TimeoutError, OSError) as exc:
+            errors.append(f"{suggestion.title}: {exc}")
+    result = f"{added} fonte(s) adicionada(s), {articles} notícia(s)."
+    if errors:
+        result += f" {len(errors)} falha(s): {errors[0]}"
+    return result
+
+
 def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
     curses.curs_set(0)
     stdscr.keypad(True)
@@ -375,7 +451,13 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
     selected_feed = 0
     selected_article = 0
     pane = 0
-    status = "Prévia de demonstração: dados fictícios" if demo else "Cole um site com 'a' para começar."
+    status = "Prévia de demonstração: dados fictícios" if demo else "Pressione 's' para sugestões ou 'a' para colar um link."
+    if not demo and not db.execute("SELECT 1 FROM feeds LIMIT 1").fetchone():
+        choice = choose_suggestions(stdscr, db, styles)
+        if choice == "manual":
+            status = add_manual(stdscr, db, styles)
+        elif choice:
+            status = add_suggestions(stdscr, db, styles, choice)
     while True:
         height, width = stdscr.getmaxyx()
         stdscr.erase()
@@ -428,7 +510,7 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
             draw(stdscr, row, left + 1, label, available, attr)
         draw(stdscr, height - 3, 1, "─" * max(0, width - 2), width - 2, styles["muted"])
         draw(stdscr, height - 2, 1, status, width - 2, styles["status"])
-        draw(stdscr, height - 1, 0, " Tab painel  j/k mover  Enter ler  a adicionar  r atualizar  d remover  t temas  q sair", width, styles["footer"])
+        draw(stdscr, height - 1, 0, " Tab painel  j/k mover  Enter ler  s sugestões  a link  r atualizar  d remover  t temas  q sair", width, styles["footer"])
         stdscr.refresh()
         key = stdscr.getch()
         if key == ord("q"):
@@ -470,14 +552,13 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
             if demo:
                 status = "No modo demonstração, alterações não são salvas."
                 continue
-            url = prompt(stdscr, " URL do site ou RSS: ", styles)
-            if url:
-                status = "Buscando RSS..."
-                try:
-                    title, count = add_site(db, url)
-                    status = f"{title}: {count} notícias adicionadas."
-                except (ValueError, HTTPError, URLError, TimeoutError, OSError) as exc:
-                    status = f"Erro: {exc}"
+            status = add_manual(stdscr, db, styles)
+        elif key == ord("s"):
+            choice = choose_suggestions(stdscr, db, styles)
+            if choice == "manual":
+                status = "No modo demonstração, alterações não são salvas." if demo else add_manual(stdscr, db, styles)
+            elif choice:
+                status = "No modo demonstração, alterações não são salvas." if demo else add_suggestions(stdscr, db, styles, choice)
         elif key == ord("r"):
             if demo:
                 status = "Modo demonstração: nenhuma conexão feita."

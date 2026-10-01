@@ -69,10 +69,12 @@ class AppTest(unittest.TestCase):
                 path = Path(temp) / "clinews.db"
                 db = open_db(path)
                 site = f"http://127.0.0.1:{server.server_port}/"
-                title, count = add_site(db, site)
-                self.assertEqual((title, count), ("Noticias de Teste", 1))
+                title, count = add_site(db, site, "Fonte sugerida")
+                self.assertEqual((title, count), ("Fonte sugerida", 1))
                 self.assertEqual(db.execute("SELECT summary FROM articles").fetchone()[0], "Resumo de teste.")
+                self.assertEqual(add_site(db, site, "Fonte sugerida"), ("Fonte sugerida", 0))
                 self.assertEqual(refresh(db), (0, []))
+                self.assertEqual(db.execute("SELECT title FROM feeds").fetchone()[0], "Fonte sugerida")
                 db.close()
                 reopened = open_db(path)
                 self.assertEqual(reopened.execute("SELECT COUNT(*) FROM feeds").fetchone()[0], 1)
