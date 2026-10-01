@@ -19,8 +19,9 @@ from xml.etree import ElementTree as ET
 
 from .themes import THEMES, basic_color, load_theme, nearest_xterm, save_theme
 from .suggestions import SUGGESTIONS, Suggestion
+from .translation import TranslationError, load_api_key, save_api_key, translate_to_portuguese
 
-USER_AGENT = "clinews/0.1 (+terminal RSS reader)"
+USER_AGENT = "clinews/0.2 (+terminal RSS reader)"
 ATOM = "{http://www.w3.org/2005/Atom}"
 CONTENT = "{http://purl.org/rss/1.0/modules/content/}"
 
@@ -156,6 +157,8 @@ def discover_feed(site_url: str) -> tuple[str, str, list[dict[str, str]]]:
 
 
 def data_path() -> Path:
+    if snap_data := os.environ.get("SNAP_USER_COMMON"):
+        return Path(snap_data) / "data" / "clinews.db"
     base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
     return base / "clinews" / "clinews.db"
 
@@ -164,6 +167,7 @@ def open_db(path: Path | str = ":memory:") -> sqlite3.Connection:
     if path != ":memory:":
         Path(path).parent.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(path)
+    db.execute("PRAGMA foreign_keys = ON")
     db.row_factory = sqlite3.Row
     db.executescript("""
         CREATE TABLE IF NOT EXISTS feeds (
@@ -175,6 +179,11 @@ def open_db(path: Path | str = ":memory:") -> sqlite3.Connection:
             guid TEXT NOT NULL, title TEXT NOT NULL, url TEXT NOT NULL,
             summary TEXT NOT NULL, published TEXT NOT NULL, is_read INTEGER NOT NULL DEFAULT 0,
             UNIQUE(feed_id, guid)
+        );
+        CREATE TABLE IF NOT EXISTS translations (
+            article_id INTEGER PRIMARY KEY REFERENCES articles(id) ON DELETE CASCADE,
+            title TEXT NOT NULL, summary TEXT NOT NULL, source_language TEXT NOT NULL,
+            target_language TEXT NOT NULL DEFAULT 'PT-BR'
         );
     """)
     return db
@@ -310,25 +319,47 @@ def prompt(stdscr: curses.window, label: str, styles: dict[str, int]) -> str:
         curses.curs_set(0)
 
 
-def reader(stdscr: curses.window, article: sqlite3.Row, styles: dict[str, int]) -> None:
-    lines = [article["title"], "", article["published"], ""]
-    for paragraph in article["summary"].splitlines() or ["Sem resumo no feed. Abra o link para ler o texto completo."]:
-        lines.extend(textwrap.wrap(paragraph, width=max(20, stdscr.getmaxyx()[1] - 4)) or [""])
-    lines.extend(["", "Link da matéria original:"])
-    lines.extend(textwrap.wrap(article["url"], width=max(20, stdscr.getmaxyx()[1] - 4),
-                               break_long_words=True, break_on_hyphens=False)
-                 if article["url"] else ["Não informado pelo feed."])
+def prompt_secret(stdscr: curses.window, label: str, styles: dict[str, int]) -> str:
+    height, width = stdscr.getmaxyx()
+    label = label[:max(1, width - 2)]
+    curses.noecho()
+    curses.curs_set(1)
+    draw(stdscr, height - 1, 0, label, width, styles["footer"])
+    stdscr.refresh()
+    try:
+        value = stdscr.getstr(height - 1, min(len(label), width - 1), max(1, width - len(label) - 1))
+        return value.decode("utf-8", errors="replace").strip()
+    finally:
+        curses.curs_set(0)
+
+
+def reader(stdscr: curses.window, db: sqlite3.Connection, article: sqlite3.Row,
+           styles: dict[str, int]) -> None:
     offset = 0
+    cached = db.execute("SELECT * FROM translations WHERE article_id=?", (article["id"],)).fetchone()
+    showing_translation = False
+    status = ""
     while True:
         height, width = stdscr.getmaxyx()
+        title = cached["title"] if showing_translation and cached else article["title"]
+        summary = cached["summary"] if showing_translation and cached else article["summary"]
+        lines = [title, "", article["published"], ""]
+        for paragraph in summary.splitlines() or ["Sem resumo no feed. Abra o link para ler o texto completo."]:
+            lines.extend(textwrap.wrap(paragraph, width=max(20, width - 4)) or [""])
+        lines.extend(["", "Link da matéria original:"])
+        lines.extend(textwrap.wrap(article["url"], width=max(20, width - 4),
+                                   break_long_words=True, break_on_hyphens=False)
+                     if article["url"] else ["Não informado pelo feed."])
         stdscr.erase()
-        draw(stdscr, 0, 0, " clinews  /  leitura", width, styles["header"] | curses.A_BOLD)
+        heading = " clinews  /  leitura · tradução PT-BR" if showing_translation else " clinews  /  leitura"
+        draw(stdscr, 0, 0, heading, width, styles["header"] | curses.A_BOLD)
         for row, line in enumerate(lines[offset:offset + height - 3], 1):
             color = styles["heading"] if row == 1 and offset == 0 else styles["body"]
             if line == "Link da matéria original:" or line.startswith("http://") or line.startswith("https://"):
                 color = styles["link"]
             draw(stdscr, row, 2, line, max(1, width - 4), color | (curses.A_BOLD if row == 1 and offset == 0 else 0))
-        draw(stdscr, height - 1, 0, " j/k rolar   o abrir link   q voltar", width, styles["footer"])
+        draw(stdscr, height - 2, 0, status, width, styles["status"])
+        draw(stdscr, height - 1, 0, " j/k rolar   t traduzir/voltar   o abrir link   q voltar", width, styles["footer"])
         stdscr.refresh()
         key = stdscr.getch()
         if key in (ord("q"), 27, 10):
@@ -340,6 +371,43 @@ def reader(stdscr: curses.window, article: sqlite3.Row, styles: dict[str, int]) 
         elif key == ord("o") and article["url"]:
             import webbrowser
             webbrowser.open(article["url"])
+        elif key == ord("t"):
+            if showing_translation:
+                showing_translation = False
+                status = "Texto original."
+            else:
+                if not cached:
+                    api_key = load_api_key()
+                    if not api_key:
+                        api_key = prompt_secret(stdscr, " Chave DeepL API (entrada oculta; Enter cancela): ", styles)
+                        if not api_key:
+                            status = "Tradução cancelada."
+                            continue
+                        try:
+                            save_api_key(api_key)
+                        except OSError as exc:
+                            status = f"Não foi possível salvar a chave localmente: {exc}"
+                            continue
+                    status = "Traduzindo título e resumo do feed..."
+                    draw(stdscr, height - 2, 0, status, width, styles["status"])
+                    stdscr.refresh()
+                    try:
+                        translated_title, translated_summary, source_language = translate_to_portuguese(
+                            article["title"], article["summary"]
+                        )
+                        db.execute("""INSERT OR REPLACE INTO translations
+                            (article_id, title, summary, source_language, target_language)
+                            VALUES (?, ?, ?, ?, 'PT-BR')""",
+                                   (article["id"], translated_title, translated_summary, source_language))
+                        db.commit()
+                        cached = db.execute("SELECT * FROM translations WHERE article_id=?",
+                                            (article["id"],)).fetchone()
+                    except TranslationError as exc:
+                        status = str(exc)
+                        continue
+                showing_translation = True
+                status = "Tradução salva localmente. Pressione t para ver o original."
+            offset = 0
 
 
 def choose_theme(stdscr: curses.window, current: str) -> str:
@@ -536,7 +604,7 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
                 article = articles[selected_article]
                 db.execute("UPDATE articles SET is_read=1 WHERE id=?", (article["id"],))
                 db.commit()
-                reader(stdscr, article, styles)
+                reader(stdscr, db, article, styles)
         elif key == ord("t"):
             chosen = choose_theme(stdscr, theme_name)
             styles = apply_theme(stdscr, chosen)

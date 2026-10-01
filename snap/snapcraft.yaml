@@ -1,0 +1,31 @@
+name: clinews
+title: clinews
+version: '0.2.0'
+summary: Leia notícias dos seus sites favoritos no terminal
+description: |
+  clinews é um leitor RSS para o terminal. Escolha fontes sugeridas ou adicione
+  seus próprios sites, atualize as notícias e leia os resumos sem sair do terminal.
+  Inclui tradução opcional de notícias em inglês, sete temas e dados locais.
+base: core24
+grade: stable
+confinement: strict
+license: Proprietary
+website: https://github.com/LeandroDukievicz/clinews
+source-code: https://github.com/LeandroDukievicz/clinews
+issues: https://github.com/LeandroDukievicz/clinews/issues
+contact: https://github.com/LeandroDukievicz/clinews/issues
+icon: assets/clinews-snap-icon.png
+
+apps:
+  clinews:
+    command: bin/clinews
+    plugs:
+      - network
+      - desktop
+
+parts:
+  clinews:
+    plugin: python
+    source: .
+    build-packages:
+      - python3-venv

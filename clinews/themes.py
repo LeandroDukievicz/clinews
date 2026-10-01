@@ -42,6 +42,8 @@ THEMES: dict[str, dict[str, str]] = {
 
 
 def config_path() -> Path:
+    if snap_data := os.environ.get("SNAP_USER_COMMON"):
+        return Path(snap_data) / "config" / "config.json"
     base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
     return base / "clinews" / "config.json"
 

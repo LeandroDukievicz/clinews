@@ -1,11 +1,12 @@
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from clinews.app import add_site, open_db, parse_feed, refresh
-from clinews.themes import DEFAULT_THEME, THEMES, load_theme, nearest_xterm, save_theme
+from clinews.app import add_site, data_path, open_db, parse_feed, refresh
+from clinews.themes import DEFAULT_THEME, THEMES, config_path, load_theme, nearest_xterm, save_theme
 
 
 RSS = b'''<?xml version="1.0"?><rss version="2.0"><channel><title>Noticias de Teste</title>
@@ -36,6 +37,13 @@ class Handler(BaseHTTPRequestHandler):
 
 
 class AppTest(unittest.TestCase):
+    def test_snap_uses_persistent_user_directory(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with patch.dict("os.environ", {"SNAP_USER_COMMON": temp, "XDG_DATA_HOME": "/not-used",
+                                            "XDG_CONFIG_HOME": "/not-used"}):
+                self.assertEqual(data_path(), Path(temp) / "data" / "clinews.db")
+                self.assertEqual(config_path(), Path(temp) / "config" / "config.json")
+
     def test_theme_preference_persists(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "config.json"
