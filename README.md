@@ -6,6 +6,8 @@ Prévia funcional de um leitor de notícias por RSS para o terminal. Na primeira
 
 Landing page: [leandrodukievicz.github.io/clinews](https://leandrodukievicz.github.io/clinews/).
 
+A landing page mostra capturas reais da lista de notícias, das sugestões de fontes, da leitura e do seletor de temas no modo de demonstração.
+
 O arquivo [assets/clinews-logo.png](assets/clinews-logo.png) é o logo do projeto e o ícone do aplicativo. A interface do terminal abre direto nas fontes e notícias para aproveitar melhor o espaço de leitura.
 
 ```text

@@ -20,6 +20,7 @@
       </a>
       <div class="nav-links">
         <a href="#recursos">Recursos</a>
+        <a href="#telas">Telas</a>
         <a href="#comecar">Como começar</a>
         <a class="button" href="https://snapcraft.io/clinews">Instalar</a>
       </div>
@@ -31,24 +32,45 @@
       <div>
         <span class="eyebrow">Leitor RSS para terminal</span>
         <h1>Suas notícias.<br><span>No seu ritmo.</span></h1>
-        <p class="intro">Acompanhe seus sites favoritos sem feeds algorítmicos, abas demais ou distrações. Escolha as fontes e leia tudo direto no terminal.</p>
+        <p class="intro">Escolha fontes RSS ou Atom, acompanhe as novidades e leia os resumos direto no terminal. Suas fontes e notícias ficam salvas no computador.</p>
         <div class="actions">
           <a class="button" href="https://snapcraft.io/clinews">Instalar pelo Snap <span aria-hidden="true">↗</span></a>
           <a class="button secondary" href="https://github.com/LeandroDukievicz/clinews">Ver no GitHub</a>
         </div>
         <p class="install-note">Gratuito para instalar · Linux · Feito em Python</p>
       </div>
-      <div class="terminal" role="img" aria-label="Prévia do leitor clinews no terminal">
-        <div class="terminal-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span class="terminal-title">leandro@linux: ~/notícias</span></div>
-        <div class="terminal-body">
-          <div class="term-head">CLINEWS <span class="term-count">● 5 não lidas</span></div>
-          <div class="term-sub">Notícias dos sites que você escolhe</div>
-          <div class="term-row"><span>▸ Todas as fontes</span><span class="count">5</span></div>
-          <div class="term-row"><span>  Tecnologia</span><span class="count">2</span></div>
-          <div class="term-row"><span>  Ciência</span><span class="count">2</span></div>
-          <div class="term-row active"><span>● Researchers discover a new planet</span><span class="count">↵</span></div>
-          <div class="term-row"><span>  Por que o RSS ainda é útil</span><span class="count"> </span></div>
-          <div class="term-foot"><b>Tab</b> painel&nbsp;&nbsp; <b>j/k</b> mover&nbsp;&nbsp; <b>Enter</b> ler&nbsp;&nbsp; <b>t</b> temas</div>
+      <figure class="hero-screen">
+        <a href="assets/tela-noticias.png" target="_blank" rel="noopener" aria-label="Abrir captura da lista de notícias em tamanho completo">
+          <img src="assets/tela-noticias.png" width="1096" height="431" alt="Tela real do clinews no tema Midnight, com fontes à esquerda e notícias não lidas à direita" fetchpriority="high">
+        </a>
+        <figcaption>Interface real do clinews · modo de demonstração</figcaption>
+      </figure>
+    </section>
+
+    <section class="section screenshots" id="telas">
+      <div class="wrap">
+        <div class="section-heading">
+          <span class="eyebrow">Por dentro do app</span>
+          <h2>Da escolha das fontes à leitura.</h2>
+          <p>Capturas da TUI real no modo de demonstração, com dados fictícios. Clique em uma imagem para ampliá-la.</p>
+        </div>
+        <div class="screen-grid">
+          <figure class="screen-card">
+            <a href="assets/tela-noticias.png" target="_blank" rel="noopener"><img src="assets/tela-noticias.png" width="1096" height="431" loading="lazy" alt="Lista de fontes à esquerda e matérias não lidas à direita no tema Midnight"></a>
+            <figcaption><strong>Acompanhe as novidades</strong><span>Veja todas as matérias ou filtre por fonte. O ponto colorido marca o que ainda não foi lido.</span></figcaption>
+          </figure>
+          <figure class="screen-card">
+            <a href="assets/tela-fontes.png" target="_blank" rel="noopener"><img src="assets/tela-fontes.png" width="1096" height="431" loading="lazy" alt="Tela de sugestões de fontes com opções em português e inglês"></a>
+            <figcaption><strong>Escolha suas fontes</strong><span>Marque sugestões ou adicione manualmente o endereço de um site ou feed.</span></figcaption>
+          </figure>
+          <figure class="screen-card">
+            <a href="assets/tela-leitura.png" target="_blank" rel="noopener"><img src="assets/tela-leitura.png" width="1096" height="431" loading="lazy" alt="Tela de leitura com título, data, resumo e área para o link original"></a>
+            <figcaption><strong>Leia no terminal</strong><span>Veja o resumo do feed, encontre o link original e traduza textos em inglês quando quiser.</span></figcaption>
+          </figure>
+          <figure class="screen-card">
+            <a href="assets/tela-temas.png" target="_blank" rel="noopener"><img src="assets/tela-temas.png" width="1096" height="431" loading="lazy" alt="Seletor de temas do clinews mostrando sete paletas"></a>
+            <figcaption><strong>Ajuste as cores</strong><span>Escolha entre sete temas e veja a prévia antes de salvar.</span></figcaption>
+          </figure>
         </div>
       </div>
     </section>

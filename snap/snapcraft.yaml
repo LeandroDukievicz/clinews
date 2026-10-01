@@ -3,9 +3,27 @@ title: clinews
 version: '0.2.3'
 summary: Leia notícias dos seus sites favoritos no terminal
 description: |
-  clinews é um leitor RSS para o terminal. Escolha fontes sugeridas ou adicione
-  seus próprios sites, atualize as notícias e leia os resumos sem sair do terminal.
-  Inclui tradução opcional de notícias em inglês, sete temas e dados locais.
+  O clinews reúne notícias de feeds RSS e Atom em uma interface para o terminal.
+  Você decide quais sites acompanhar e quando buscar novidades.
+
+  Comece escolhendo entre fontes sugeridas de notícias, tecnologia, ciência,
+  economia e cultura. Também é possível colar o endereço de um site ou o link
+  direto do feed; quando o site anuncia um RSS ou Atom, o clinews tenta encontrá-lo.
+
+  Na tela principal, navegue entre fontes e matérias pelo teclado, veja quais
+  notícias ainda não foram lidas e abra o resumo sem sair do terminal. Cada
+  matéria mostra o link original, que pode ser aberto no navegador. Fontes e
+  notícias recebidas ficam salvas localmente para consulta sem conexão. A
+  atualização é manual, pelo atalho `r`.
+
+  O aplicativo oferece sete temas: Vampire, NeoTokio, OldCity, FullDark,
+  SunMode, Midnight e Zenmode. Em notícias em inglês, o atalho `t` na tela de
+  leitura traduz o título e o resumo para português do Brasil usando a Google
+  Cloud Translation API. Esse recurso é opcional, exige uma chave de API própria
+  e guarda as traduções já feitas no computador.
+
+  O texto disponível depende do conteúdo enviado pelo feed. Quando um site
+  fornece apenas um trecho, use o link original para ler a matéria completa.
 base: core24
 grade: stable
 confinement: strict
