@@ -4,6 +4,8 @@
 
 Prévia funcional de um leitor de notícias por RSS para o terminal. Na primeira abertura, você escolhe fontes sugeridas por assunto ou cola o endereço de um site. O `clinews` salva as fontes e mostra as notícias no terminal.
 
+Landing page: [leandrodukievicz.github.io/clinews](https://leandrodukievicz.github.io/clinews/).
+
 O arquivo [assets/clinews-logo.png](assets/clinews-logo.png) é o logo e também o ícone do aplicativo. No terminal, o cabeçalho mostra uma versão colorida em pixels do mesmo símbolo. Em terminais sem suporte a cores, ela aparece em uma só cor.
 
 ```text

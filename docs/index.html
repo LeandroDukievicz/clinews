@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07121f">
+  <meta name="description" content="Acompanhe seus sites favoritos pelo RSS, direto no terminal. Leia no seu ritmo com o clinews.">
+  <meta property="og:title" content="clinews — suas notícias, no seu terminal">
+  <meta property="og:description" content="Um leitor RSS simples, personalizável e feito para o terminal.">
+  <meta property="og:type" content="website">
+  <title>clinews — suas notícias, no seu terminal</title>
+  <link rel="icon" type="image/png" href="assets/clinews-snap-icon.png">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav wrap" aria-label="Navegação principal">
+      <a class="brand" href="#inicio" aria-label="clinews, início">
+        <img src="assets/clinews-snap-icon.png" alt=""><span>CLINEWS</span>
+      </a>
+      <div class="nav-links">
+        <a href="#recursos">Recursos</a>
+        <a href="#comecar">Como começar</a>
+        <a class="button" href="https://snapcraft.io/clinews">Instalar</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="inicio">
+    <section class="hero wrap">
+      <div>
+        <span class="eyebrow">Leitor RSS para terminal</span>
+        <h1>Suas notícias.<br><span>No seu ritmo.</span></h1>
+        <p class="intro">Acompanhe seus sites favoritos sem feeds algorítmicos, abas demais ou distrações. Escolha as fontes e leia tudo direto no terminal.</p>
+        <div class="actions">
+          <a class="button" href="https://snapcraft.io/clinews">Instalar pelo Snap <span aria-hidden="true">↗</span></a>
+          <a class="button secondary" href="https://github.com/LeandroDukievicz/clinews">Ver no GitHub</a>
+        </div>
+        <p class="install-note">Gratuito para instalar · Linux · Feito em Python</p>
+      </div>
+      <div class="terminal" role="img" aria-label="Prévia do leitor clinews no terminal">
+        <div class="terminal-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span class="terminal-title">leandro@linux: ~/notícias</span></div>
+        <div class="terminal-body">
+          <div class="term-head">CLINEWS <span class="term-count">● 5 não lidas</span></div>
+          <div class="term-sub">Notícias dos sites que você escolhe</div>
+          <div class="term-row"><span>▸ Todas as fontes</span><span class="count">5</span></div>
+          <div class="term-row"><span>  Tecnologia</span><span class="count">2</span></div>
+          <div class="term-row"><span>  Ciência</span><span class="count">2</span></div>
+          <div class="term-row active"><span>● Researchers discover a new planet</span><span class="count">↵</span></div>
+          <div class="term-row"><span>  Por que o RSS ainda é útil</span><span class="count"> </span></div>
+          <div class="term-foot"><b>Tab</b> painel&nbsp;&nbsp; <b>j/k</b> mover&nbsp;&nbsp; <b>Enter</b> ler&nbsp;&nbsp; <b>t</b> temas</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="recursos">
+      <div class="wrap">
+        <div class="section-heading">
+          <span class="eyebrow">Leitura sem ruído</span>
+          <h2>A web que você escolheu acompanhar.</h2>
+          <p>O clinews reúne as atualizações dos seus sites em uma lista clara e leve, controlada pelo teclado.</p>
+        </div>
+        <div class="features">
+          <article class="feature"><div class="feature-icon" aria-hidden="true">⌕</div><h3>Suas fontes, suas regras</h3><p>Adicione qualquer feed RSS ou Atom. Comece pelas sugestões ou cole o endereço de um site.</p></article>
+          <article class="feature"><div class="feature-icon" aria-hidden="true">⌨</div><h3>Feito para o teclado</h3><p>Navegue entre fontes e notícias sem sair do terminal, com atalhos simples e sete temas.</p></article>
+          <article class="feature"><div class="feature-icon" aria-hidden="true">文</div><h3>Traduza quando quiser</h3><p>Pressione <code>t</code> ao ler uma notícia em inglês para ver o título e o resumo em português.</p></article>
+          <article class="feature"><div class="feature-icon" aria-hidden="true">◷</div><h3>Seu ritmo de leitura</h3><p>Atualize quando quiser e acompanhe o que ainda não leu. Sem sincronização em segundo plano.</p></article>
+          <article class="feature"><div class="feature-icon" aria-hidden="true">▣</div><h3>Notícias salvas localmente</h3><p>Os feeds e as matérias ficam no seu computador e continuam acessíveis sem conexão.</p></article>
+          <article class="feature"><div class="feature-icon" aria-hidden="true">◈</div><h3>Interface personalizável</h3><p>Escolha entre sete paletas de cores e ajuste a experiência ao seu terminal.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="comecar">
+      <div class="wrap how">
+        <div>
+          <span class="eyebrow">Em poucos minutos</span>
+          <h2>Instale e escolha o que ler.</h2>
+          <div class="steps">
+            <div class="step"><span class="step-number">1</span><div><h3>Instale o clinews</h3><p>Baixe pela Snap Store ou use o comando ao lado.</p></div></div>
+            <div class="step"><span class="step-number">2</span><div><h3>Adicione suas fontes</h3><p>Escolha sugestões por assunto ou cole o endereço do seu site.</p></div></div>
+            <div class="step"><span class="step-number">3</span><div><h3>Leia no terminal</h3><p>Atualize as notícias e navegue com <code>j</code>, <code>k</code> e <code>Enter</code>.</p></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="code-card"><div class="code-label">Terminal</div><pre><code><span class="prompt">$</span> sudo snap install clinews
+<span class="prompt">$</span> clinews</code></pre></div>
+          <p class="translate-note">A tradução usa a DeepL API e é opcional. Ao usar o atalho pela primeira vez, o app pede sua chave de API e a guarda localmente.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section closing">
+      <div class="wrap">
+        <span class="eyebrow">Menos rolagem. Mais leitura.</span>
+        <h2>Suas fontes já estão por aí.</h2>
+        <p>Traga-as para o terminal com o clinews.</p>
+        <a class="button" href="https://snapcraft.io/clinews">Instalar clinews <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="wrap footer-inner">
+    <span>© 2026 Leandro Dukievicz · clinews</span>
+    <div class="footer-links"><a href="https://github.com/LeandroDukievicz/clinews">Código-fonte</a><a href="https://snapcraft.io/clinews">Snap Store</a><a href="https://github.com/LeandroDukievicz/clinews/issues">Suporte</a></div>
+  </div></footer>
+</body>
+</html>
