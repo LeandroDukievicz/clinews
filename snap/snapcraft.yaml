@@ -1,6 +1,6 @@
 name: clinews
 title: clinews
-version: '0.2.0'
+version: '0.2.1'
 summary: Leia notícias dos seus sites favoritos no terminal
 description: |
   clinews é um leitor RSS para o terminal. Escolha fontes sugeridas ou adicione
@@ -10,7 +10,7 @@ base: core24
 grade: stable
 confinement: strict
 license: Proprietary
-website: https://github.com/LeandroDukievicz/clinews
+website: https://leandrodukievicz.github.io/clinews/
 source-code: https://github.com/LeandroDukievicz/clinews
 issues: https://github.com/LeandroDukievicz/clinews/issues
 contact: https://github.com/LeandroDukievicz/clinews/issues

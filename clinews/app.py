@@ -21,7 +21,7 @@ from .themes import THEMES, basic_color, load_theme, nearest_xterm, save_theme
 from .suggestions import SUGGESTIONS, Suggestion
 from .translation import TranslationError, load_api_key, save_api_key, translate_to_portuguese
 
-USER_AGENT = "clinews/0.2 (+terminal RSS reader)"
+USER_AGENT = "clinews/0.2.1 (+terminal RSS reader)"
 ATOM = "{http://www.w3.org/2005/Atom}"
 CONTENT = "{http://purl.org/rss/1.0/modules/content/}"
 
@@ -266,8 +266,6 @@ def apply_theme(stdscr: curses.window, name: str) -> dict[str, int]:
         "muted": ("muted", "bg"), "selected": ("selected_fg", "selection"),
         "unread": ("unread", "bg"), "status": ("muted", "bg"),
         "footer": ("fg", "surface"), "link": ("link", "bg"),
-        "logo_border": ("logo_border", "bg"), "logo_paper": ("logo_paper", "bg"),
-        "logo_cyan": ("logo_cyan", "bg"), "logo_rss": ("logo_rss", "bg"),
     }
     styles = {role: 0 for role in roles}
     if not curses.has_colors():
@@ -281,27 +279,6 @@ def apply_theme(stdscr: curses.window, name: str) -> dict[str, int]:
         styles[role] = curses.color_pair(index)
     stdscr.bkgd(" ", styles["body"])
     return styles
-
-
-def draw_logo(stdscr: curses.window, styles: dict[str, int]) -> None:
-    # O mesmo símbolo do PNG, simplificado em pixels para terminais comuns.
-    pixels = (
-        "         Y Y",
-        "   BBBB  YYY",
-        "  BBWWWB  YY",
-        "  BWWCWB   Y",
-        "  BWWWWB    ",
-        "  BBBBBB    ",
-    )
-    colors = {"B": styles["logo_border"], "W": styles["logo_paper"],
-              "C": styles["logo_cyan"], "Y": styles["logo_rss"]}
-    for row, line in enumerate(pixels, 1):
-        for col, pixel in enumerate(line, 1):
-            if pixel != " ":
-                try:
-                    stdscr.addstr(row, col, "█", colors.get(pixel, 0) | curses.A_BOLD)
-                except curses.error:
-                    pass
 
 
 def prompt(stdscr: curses.window, label: str, styles: dict[str, int]) -> str:
@@ -545,19 +522,11 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
         selected_article = max(0, min(selected_article, len(articles) - 1))
         unread = db.execute("SELECT COUNT(*) FROM articles WHERE is_read=0").fetchone()[0]
         draw(stdscr, 0, 0, f" CLINEWS  ●  {unread} não lidas  •  {theme_name}", width, styles["header"] | curses.A_BOLD)
-        expanded_header = height >= 18 and width >= 70
-        if expanded_header:
-            draw_logo(stdscr, styles)
-            draw(stdscr, 2, 16, "C L I N E W S", width - 17, styles["accent"] | curses.A_BOLD)
-            draw(stdscr, 4, 16, "Notícias dos sites que você escolhe", width - 17, styles["muted"])
-        else:
-            draw(stdscr, 1, 1, "■", 1, styles["logo_cyan"] | curses.A_BOLD)
-            draw(stdscr, 1, 3, "CLINEWS", width - 4, styles["accent"] | curses.A_BOLD)
-        heading_row = 8 if expanded_header else 3
-        first_row = heading_row + 1
+        heading_row = 1
+        first_row = 2
         left = max(18, min(29, width // 3))
-        draw(stdscr, heading_row, 1, "FONTES", left - 2, styles["heading"] | curses.A_BOLD)
-        draw(stdscr, heading_row, left + 1, "NOTÍCIAS", width - left - 2, styles["heading"] | curses.A_BOLD)
+        draw(stdscr, heading_row, 1, f"FONTES ({len(feeds)})", left - 2, styles["heading"] | curses.A_BOLD)
+        draw(stdscr, heading_row, left + 1, f"NOTÍCIAS ({len(articles)})", width - left - 2, styles["heading"] | curses.A_BOLD)
         source_rows = [("Todas as fontes", None)] + [(feed["title"], feed["id"]) for feed in feeds]
         visible = height - first_row - 3
         source_start = max(0, selected_feed - visible + 1)
@@ -578,7 +547,11 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
             draw(stdscr, row, left + 1, label, available, attr)
         draw(stdscr, height - 3, 1, "─" * max(0, width - 2), width - 2, styles["muted"])
         draw(stdscr, height - 2, 1, status, width - 2, styles["status"])
-        draw(stdscr, height - 1, 0, " Tab painel  j/k mover  Enter ler  s sugestões  a link  r atualizar  d remover  t temas  q sair", width, styles["footer"])
+        footer = "Tab trocar  j/k mover  Enter ler  q sair" if width < 55 else (
+            "Tab painel  j/k mover  Enter ler  r atualizar  t temas  q sair" if width < 80 else
+            "Tab painel  j/k mover  Enter ler  s sugestões  a link  r atualizar  d remover  t temas  q sair"
+        )
+        draw(stdscr, height - 1, 0, footer, width, styles["footer"])
         stdscr.refresh()
         key = stdscr.getch()
         if key == ord("q"):

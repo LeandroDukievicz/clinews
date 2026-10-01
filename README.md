@@ -6,27 +6,18 @@ Prévia funcional de um leitor de notícias por RSS para o terminal. Na primeira
 
 Landing page: [leandrodukievicz.github.io/clinews](https://leandrodukievicz.github.io/clinews/).
 
-O arquivo [assets/clinews-logo.png](assets/clinews-logo.png) é o logo e também o ícone do aplicativo. No terminal, o cabeçalho mostra uma versão colorida em pixels do mesmo símbolo. Em terminais sem suporte a cores, ela aparece em uma só cor.
+O arquivo [assets/clinews-logo.png](assets/clinews-logo.png) é o logo do projeto e o ícone do aplicativo. A interface do terminal abre direto nas fontes e notícias para aproveitar melhor o espaço de leitura.
 
 ```text
- CLINEWS  ●  5 não lidas
-
-          ▉ ▉
-    ▉▉▉▉  ▉▉▉
-   ▉▉▉▉▉▉  ▉▉   C L I N E W S
-   ▉▉▉▉▉▉   ▉   Notícias dos sites que você escolhe
-   ▉▉▉▉▉▉
-   ▉▉▉▉▉▉
-
- FONTES                    NOTÍCIAS
+ CLINEWS  ●  5 não lidas  •  Midnight
+ FONTES (3)                NOTÍCIAS (5)
  Todas as fontes       5    ● Uma nova forma de acompanhar a web
  Tecnologia            2    ● Por que o RSS ainda é útil
  Ciência               2    ● Pesquisadores publicam novos resultados
  Cultura               1    ● O céu desta semana
                             ● Livros para descobrir neste mês
 
- Pressione 's' para sugestões ou 'a' para colar um link.
- Tab painel   j/k mover   Enter ler   s sugestões   a link   r atualizar   d remover   t temas   q sair
+ Tab painel  j/k mover  Enter ler  s sugestões  a link  r atualizar  d remover  t temas  q sair
 ```
 
 ## Experimentar a prévia
@@ -89,7 +80,7 @@ Para gerar e testar o pacote em uma máquina com Snapcraft e LXD configurados:
 
 ```bash
 snapcraft pack --use-lxd
-sudo snap install --dangerous ./clinews_0.2.0_amd64.snap
+sudo snap install --dangerous ./clinews_0.2.1_amd64.snap
 clinews --demo
 ```
 
