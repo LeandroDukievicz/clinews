@@ -43,14 +43,14 @@ Para cadastrar um site próprio, pressione `a` e cole a URL do site ou do própr
 
 ## Tradução
 
-A tradução é feita sob demanda pela DeepL API. Crie uma chave em um plano da [DeepL API](https://www.deepl.com/pro#developer). Na primeira vez que pressionar `t` em uma notícia, cole a chave no campo oculto; o clinews a salva somente para seu usuário, com acesso restrito, e a reutiliza nas próximas traduções. Também é possível definir `CLINEWS_DEEPL_API_KEY` antes de iniciar o programa:
+A tradução é feita sob demanda pela [Google Cloud Translation API v2](https://cloud.google.com/translate). Ative a API em um projeto do Google Cloud e crie uma chave de API. Na primeira vez que pressionar `t` em uma notícia, cole a chave no campo oculto; o clinews a salva somente para seu usuário, com acesso restrito, e a reutiliza nas próximas traduções. Também é possível definir `CLINEWS_GOOGLE_TRANSLATE_API_KEY` antes de iniciar o programa:
 
 ```bash
-export CLINEWS_DEEPL_API_KEY='sua-chave-da-deepl-api'
+export CLINEWS_GOOGLE_TRANSLATE_API_KEY='sua-chave-do-google-cloud'
 python3 -m clinews
 ```
 
-O programa usa por padrão o endpoint da DeepL API Free. Para uma chave Pro, configure também `CLINEWS_DEEPL_API_URL=https://api.deepl.com/v2/translate`. A API detecta o idioma de origem; o clinews só mostra a tradução se o texto for identificado como inglês. Traduções ficam em cache no banco local, então abrir de novo uma notícia já traduzida não faz outra solicitação. Somente o título e o resumo que vieram no RSS são enviados; artigos cujo feed não fornece resumo continuam limitados ao título.
+O Google Cloud oferece crédito mensal equivalente aos primeiros 500 mil caracteres de tradução; depois disso, o uso é cobrado por caractere conforme a [tabela de preços](https://cloud.google.com/translate/pricing). A API detecta o idioma de origem; o clinews só mostra a tradução se o texto for identificado como inglês. Traduções ficam em cache no banco local, então abrir de novo uma notícia já traduzida não faz outra solicitação. Somente o título e o resumo que vieram no RSS são enviados; artigos cujo feed não fornece resumo continuam limitados ao título. O tempo limite de conexão é de 15 segundos.
 
 As sugestões incluem fontes em português e inglês de notícias, tecnologia, ciência, economia e cultura. Os endereços vêm das páginas das próprias fontes, como os [feeds da Agência Brasil](https://agenciabrasil.ebc.com.br/feed/), o [feed do Manual do Usuário](https://manualdousuario.net/acompanhe/) e os [feeds da NASA](https://www.nasa.gov/rss-feeds/). A disponibilidade de cada feed é conferida ao adicioná-lo; se um endereço deixar de funcionar, o app mostra o erro e continua com as outras fontes escolhidas.
 
@@ -61,7 +61,7 @@ Pressione `t`, escolha com `j`/`k` ou as setas e pressione `Enter`. A prévia mu
 | Tema | Cores |
 | --- | --- |
 | Vampire | Roxo, rosa e ciano da [paleta Dracula](https://draculatheme.com/contribute) |
-| NeoTokio | Rosa neon, ciano e amarelo em fundo escuro, inspirado em cyberpunk |
+| NeoTokio | Azul-marinho com ciano e magenta, em estilo cyberpunk |
 | OldCity | Cobre, bronze e sépia, inspirado em steampunk |
 | FullDark | Preto com verdes vivos |
 | SunMode | Fundo branco com texto escuro |
@@ -80,12 +80,12 @@ Para gerar e testar o pacote em uma máquina com Snapcraft e LXD configurados:
 
 ```bash
 snapcraft pack --use-lxd
-sudo snap install --dangerous ./clinews_0.2.1_amd64.snap
+sudo snap install --dangerous ./clinews_0.2.2_amd64.snap
 clinews --demo
 ```
 
 No Snap, notícias e preferências ficam em `~/snap/clinews/common/`, separados da instalação Python comum e preservados entre revisões. O pacote não importa automaticamente dados da instalação anterior.
 
-O projeto é proprietário e todos os direitos são reservados; veja [LICENSE](LICENSE). A chave da DeepL inserida no primeiro uso fica em `~/snap/clinews/common/config/deepl-api-key` nas instalações Snap, com permissão de leitura e escrita apenas para seu usuário.
+O projeto é proprietário e todos os direitos são reservados; veja [LICENSE](LICENSE). A chave da Google Cloud Translation inserida no primeiro uso fica em `~/snap/clinews/common/config/google-translate-api-key` nas instalações Snap, com permissão de leitura e escrita apenas para seu usuário.
 
 Esta é uma prévia inicial: atualização manual, sem sincronização em segundo plano e sem download da página completa do artigo.
