@@ -17,6 +17,8 @@ from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree as ET
 
+from .themes import THEMES, basic_color, load_theme, nearest_xterm, save_theme
+
 USER_AGENT = "clinews/0.1 (+terminal RSS reader)"
 ATOM = "{http://www.w3.org/2005/Atom}"
 CONTENT = "{http://purl.org/rss/1.0/modules/content/}"
@@ -246,25 +248,31 @@ def draw(stdscr: curses.window, y: int, x: int, text: str, width: int, attr: int
         pass
 
 
-def logo_colors() -> dict[str, int]:
+def apply_theme(stdscr: curses.window, name: str) -> dict[str, int]:
+    roles = {
+        "body": ("fg", "bg"), "header": ("fg", "surface"),
+        "heading": ("accent", "bg"), "accent": ("accent", "bg"),
+        "muted": ("muted", "bg"), "selected": ("selected_fg", "selection"),
+        "unread": ("unread", "bg"), "status": ("muted", "bg"),
+        "footer": ("fg", "surface"), "link": ("link", "bg"),
+        "logo_border": ("logo_border", "bg"), "logo_paper": ("logo_paper", "bg"),
+        "logo_cyan": ("logo_cyan", "bg"), "logo_rss": ("logo_rss", "bg"),
+    }
+    styles = {role: 0 for role in roles}
     if not curses.has_colors():
-        return {}
+        styles["header"] = styles["footer"] = styles["selected"] = curses.A_REVERSE
+        return styles
     curses.start_color()
-    try:
-        curses.use_default_colors()
-        background = -1
-    except curses.error:
-        background = curses.COLOR_BLACK
-    palette = (27, 15, 51, 214) if curses.COLORS >= 256 else (
-        curses.COLOR_BLUE, curses.COLOR_WHITE, curses.COLOR_CYAN, curses.COLOR_YELLOW)
-    colors = {}
-    for index, (letter, foreground) in enumerate(zip("BWCY", palette), 1):
-        curses.init_pair(index, foreground, background)
-        colors[letter] = curses.color_pair(index)
-    return colors
+    convert = nearest_xterm if curses.COLORS >= 256 else basic_color
+    palette = THEMES[name]
+    for index, (role, (foreground, background)) in enumerate(roles.items(), 1):
+        curses.init_pair(index, convert(palette[foreground]), convert(palette[background]))
+        styles[role] = curses.color_pair(index)
+    stdscr.bkgd(" ", styles["body"])
+    return styles
 
 
-def draw_logo(stdscr: curses.window, colors: dict[str, int]) -> None:
+def draw_logo(stdscr: curses.window, styles: dict[str, int]) -> None:
     # O mesmo símbolo do PNG, simplificado em pixels para terminais comuns.
     pixels = (
         "         Y Y",
@@ -274,6 +282,8 @@ def draw_logo(stdscr: curses.window, colors: dict[str, int]) -> None:
         "  BWWWWB    ",
         "  BBBBBB    ",
     )
+    colors = {"B": styles["logo_border"], "W": styles["logo_paper"],
+              "C": styles["logo_cyan"], "Y": styles["logo_rss"]}
     for row, line in enumerate(pixels, 1):
         for col, pixel in enumerate(line, 1):
             if pixel != " ":
@@ -283,12 +293,12 @@ def draw_logo(stdscr: curses.window, colors: dict[str, int]) -> None:
                     pass
 
 
-def prompt(stdscr: curses.window, label: str) -> str:
+def prompt(stdscr: curses.window, label: str, styles: dict[str, int]) -> str:
     height, width = stdscr.getmaxyx()
     label = label[:max(1, width - 2)]
     curses.echo()
     curses.curs_set(1)
-    draw(stdscr, height - 1, 0, label, width, curses.A_REVERSE)
+    draw(stdscr, height - 1, 0, label, width, styles["footer"])
     stdscr.refresh()
     try:
         value = stdscr.getstr(height - 1, min(len(label), width - 1), max(1, width - len(label) - 1))
@@ -298,7 +308,7 @@ def prompt(stdscr: curses.window, label: str) -> str:
         curses.curs_set(0)
 
 
-def reader(stdscr: curses.window, article: sqlite3.Row) -> None:
+def reader(stdscr: curses.window, article: sqlite3.Row, styles: dict[str, int]) -> None:
     lines = [article["title"], "", article["published"], ""]
     for paragraph in article["summary"].splitlines() or ["Sem resumo no feed. Abra o link para ler o texto completo."]:
         lines.extend(textwrap.wrap(paragraph, width=max(20, stdscr.getmaxyx()[1] - 4)) or [""])
@@ -310,10 +320,13 @@ def reader(stdscr: curses.window, article: sqlite3.Row) -> None:
     while True:
         height, width = stdscr.getmaxyx()
         stdscr.erase()
-        draw(stdscr, 0, 0, " clinews  /  leitura", width, curses.A_REVERSE)
+        draw(stdscr, 0, 0, " clinews  /  leitura", width, styles["header"] | curses.A_BOLD)
         for row, line in enumerate(lines[offset:offset + height - 3], 1):
-            draw(stdscr, row, 2, line, max(1, width - 4), curses.A_BOLD if row == 1 and offset == 0 else 0)
-        draw(stdscr, height - 1, 0, " j/k rolar   o abrir link   q voltar", width, curses.A_REVERSE)
+            color = styles["heading"] if row == 1 and offset == 0 else styles["body"]
+            if line == "Link da matéria original:" or line.startswith("http://") or line.startswith("https://"):
+                color = styles["link"]
+            draw(stdscr, row, 2, line, max(1, width - 4), color | (curses.A_BOLD if row == 1 and offset == 0 else 0))
+        draw(stdscr, height - 1, 0, " j/k rolar   o abrir link   q voltar", width, styles["footer"])
         stdscr.refresh()
         key = stdscr.getch()
         if key in (ord("q"), 27, 10):
@@ -327,10 +340,38 @@ def reader(stdscr: curses.window, article: sqlite3.Row) -> None:
             webbrowser.open(article["url"])
 
 
+def choose_theme(stdscr: curses.window, current: str) -> str:
+    names = list(THEMES)
+    selected = names.index(current)
+    while True:
+        styles = apply_theme(stdscr, names[selected])
+        height, width = stdscr.getmaxyx()
+        stdscr.erase()
+        draw(stdscr, 0, 0, " CLINEWS  /  temas", width, styles["header"] | curses.A_BOLD)
+        draw(stdscr, 1, 2, "Escolha um tema (prévia ao mover):", width - 4, styles["heading"])
+        visible = max(1, height - 4)
+        start = max(0, selected - visible + 1)
+        for row, name in enumerate(names[start:start + visible], 2):
+            attr = styles["selected"] if start + row - 2 == selected else styles["body"]
+            draw(stdscr, row, 2, f" {name}", width - 4, attr)
+        draw(stdscr, height - 1, 0, " j/k escolher   Enter salvar   Esc cancelar", width, styles["footer"])
+        stdscr.refresh()
+        key = stdscr.getch()
+        if key in (ord("j"), curses.KEY_DOWN):
+            selected = min(len(names) - 1, selected + 1)
+        elif key in (ord("k"), curses.KEY_UP):
+            selected = max(0, selected - 1)
+        elif key in (10, 13, curses.KEY_ENTER):
+            return names[selected]
+        elif key in (27, ord("q")):
+            return current
+
+
 def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
     curses.curs_set(0)
     stdscr.keypad(True)
-    colors = logo_colors()
+    theme_name = load_theme()
+    styles = apply_theme(stdscr, theme_name)
     selected_feed = 0
     selected_article = 0
     pane = 0
@@ -353,20 +394,20 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
             articles = db.execute("SELECT a.*, f.title AS feed_title FROM articles a JOIN feeds f ON f.id=a.feed_id WHERE feed_id=? ORDER BY a.published DESC, a.id DESC", (feed_id,)).fetchall()
         selected_article = max(0, min(selected_article, len(articles) - 1))
         unread = db.execute("SELECT COUNT(*) FROM articles WHERE is_read=0").fetchone()[0]
-        draw(stdscr, 0, 0, f" CLINEWS  ●  {unread} não lidas", width, curses.A_REVERSE | curses.A_BOLD)
+        draw(stdscr, 0, 0, f" CLINEWS  ●  {unread} não lidas  •  {theme_name}", width, styles["header"] | curses.A_BOLD)
         expanded_header = height >= 18 and width >= 70
         if expanded_header:
-            draw_logo(stdscr, colors)
-            draw(stdscr, 2, 16, "C L I N E W S", width - 17, colors.get("C", 0) | curses.A_BOLD)
-            draw(stdscr, 4, 16, "Notícias dos sites que você escolhe", width - 17)
+            draw_logo(stdscr, styles)
+            draw(stdscr, 2, 16, "C L I N E W S", width - 17, styles["accent"] | curses.A_BOLD)
+            draw(stdscr, 4, 16, "Notícias dos sites que você escolhe", width - 17, styles["muted"])
         else:
-            draw(stdscr, 1, 1, "■", 1, colors.get("C", 0) | curses.A_BOLD)
-            draw(stdscr, 1, 3, "CLINEWS", width - 4, colors.get("C", 0) | curses.A_BOLD)
+            draw(stdscr, 1, 1, "■", 1, styles["logo_cyan"] | curses.A_BOLD)
+            draw(stdscr, 1, 3, "CLINEWS", width - 4, styles["accent"] | curses.A_BOLD)
         heading_row = 8 if expanded_header else 3
         first_row = heading_row + 1
         left = max(18, min(29, width // 3))
-        draw(stdscr, heading_row, 1, "FONTES", left - 2, curses.A_BOLD)
-        draw(stdscr, heading_row, left + 1, "NOTÍCIAS", width - left - 2, curses.A_BOLD)
+        draw(stdscr, heading_row, 1, "FONTES", left - 2, styles["heading"] | curses.A_BOLD)
+        draw(stdscr, heading_row, left + 1, "NOTÍCIAS", width - left - 2, styles["heading"] | curses.A_BOLD)
         source_rows = [("Todas as fontes", None)] + [(feed["title"], feed["id"]) for feed in feeds]
         visible = height - first_row - 3
         source_start = max(0, selected_feed - visible + 1)
@@ -374,7 +415,7 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
             count = db.execute("SELECT COUNT(*) FROM articles WHERE is_read=0" + (" AND feed_id=?" if source_id else ""),
                                (source_id,) if source_id else ()).fetchone()[0]
             label = f"{title[:left-9]:<{left-9}} {count:>3}"
-            attr = curses.A_REVERSE if pane == 0 and source_start + row - first_row == selected_feed else 0
+            attr = styles["selected"] if pane == 0 and source_start + row - first_row == selected_feed else styles["body"]
             draw(stdscr, row, 1, label, left - 2, attr)
         start = max(0, selected_article - visible + 1)
         for row, article in enumerate(articles[start:start + visible], first_row):
@@ -382,11 +423,12 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
             marker = "●" if not article["is_read"] else " "
             available = width - left - 4
             label = f"{marker} {article['title']}"
-            attr = curses.A_REVERSE if pane == 1 and index == selected_article else (curses.A_BOLD if not article["is_read"] else 0)
+            attr = styles["selected"] if pane == 1 and index == selected_article else (
+                styles["unread"] | curses.A_BOLD if not article["is_read"] else styles["body"])
             draw(stdscr, row, left + 1, label, available, attr)
-        draw(stdscr, height - 3, 1, "─" * max(0, width - 2), width - 2)
-        draw(stdscr, height - 2, 1, status, width - 2)
-        draw(stdscr, height - 1, 0, " Tab painel   j/k mover   Enter ler   a adicionar   r atualizar   d remover   q sair", width, curses.A_REVERSE)
+        draw(stdscr, height - 3, 1, "─" * max(0, width - 2), width - 2, styles["muted"])
+        draw(stdscr, height - 2, 1, status, width - 2, styles["status"])
+        draw(stdscr, height - 1, 0, " Tab painel  j/k mover  Enter ler  a adicionar  r atualizar  d remover  t temas  q sair", width, styles["footer"])
         stdscr.refresh()
         key = stdscr.getch()
         if key == ord("q"):
@@ -412,12 +454,23 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
                 article = articles[selected_article]
                 db.execute("UPDATE articles SET is_read=1 WHERE id=?", (article["id"],))
                 db.commit()
-                reader(stdscr, article)
+                reader(stdscr, article, styles)
+        elif key == ord("t"):
+            chosen = choose_theme(stdscr, theme_name)
+            styles = apply_theme(stdscr, chosen)
+            if chosen != theme_name:
+                try:
+                    save_theme(chosen)
+                    theme_name = chosen
+                    status = f"Tema {chosen} salvo."
+                except OSError as exc:
+                    styles = apply_theme(stdscr, theme_name)
+                    status = f"Não foi possível salvar o tema: {exc}"
         elif key == ord("a"):
             if demo:
                 status = "No modo demonstração, alterações não são salvas."
                 continue
-            url = prompt(stdscr, " URL do site ou RSS: ")
+            url = prompt(stdscr, " URL do site ou RSS: ", styles)
             if url:
                 status = "Buscando RSS..."
                 try:
@@ -434,7 +487,7 @@ def ui(stdscr: curses.window, db: sqlite3.Connection, demo: bool) -> None:
                 status = f"{count} notícias novas." + (f" {len(errors)} fonte(s) com erro." if errors else "")
         elif key == ord("d") and pane == 0 and selected_feed > 0:
             feed = feeds[selected_feed - 1]
-            answer = prompt(stdscr, f" Remover {feed['title']}? (s/N): ")
+            answer = prompt(stdscr, f" Remover {feed['title']}? (s/N): ", styles)
             if answer.lower() == "s":
                 db.execute("DELETE FROM articles WHERE feed_id=?", (feed["id"],))
                 db.execute("DELETE FROM feeds WHERE id=?", (feed["id"],))

@@ -5,6 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from clinews.app import add_site, open_db, parse_feed, refresh
+from clinews.themes import DEFAULT_THEME, THEMES, load_theme, nearest_xterm, save_theme
 
 
 RSS = b'''<?xml version="1.0"?><rss version="2.0"><channel><title>Noticias de Teste</title>
@@ -35,6 +36,20 @@ class Handler(BaseHTTPRequestHandler):
 
 
 class AppTest(unittest.TestCase):
+    def test_theme_preference_persists(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "config.json"
+            self.assertEqual(load_theme(path), DEFAULT_THEME)
+            for name in THEMES:
+                save_theme(name, path)
+                self.assertEqual(load_theme(path), name)
+            path.write_text('{"theme":"desconhecido"}', encoding="utf-8")
+            self.assertEqual(load_theme(path), DEFAULT_THEME)
+
+    def test_xterm_color_approximation(self):
+        self.assertEqual(nearest_xterm("#000000"), 16)
+        self.assertEqual(nearest_xterm("#FFFFFF"), 231)
+
     def test_atom_feed(self):
         atom = b'''<feed xmlns="http://www.w3.org/2005/Atom"><title>Atom Teste</title>
         <entry><id>urn:1</id><title>Artigo Atom</title><link href="/post/1"/>
