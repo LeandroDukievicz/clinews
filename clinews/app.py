@@ -21,7 +21,7 @@ from .themes import THEMES, basic_color, load_theme, nearest_xterm, save_theme
 from .suggestions import SUGGESTIONS, Suggestion
 from .translation import TranslationError, load_api_key, save_api_key, translate_to_portuguese
 
-USER_AGENT = "clinews/0.2.2 (+terminal RSS reader)"
+USER_AGENT = "clinews/0.2.3 (+terminal RSS reader)"
 ATOM = "{http://www.w3.org/2005/Atom}"
 CONTENT = "{http://purl.org/rss/1.0/modules/content/}"
 

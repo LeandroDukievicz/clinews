@@ -1,12 +1,16 @@
 import tempfile
 import threading
 import unittest
+import io
+import json
 from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.error import HTTPError
 
 from clinews.app import add_site, data_path, open_db, parse_feed, refresh
 from clinews.themes import DEFAULT_THEME, THEMES, config_path, load_theme, nearest_xterm, save_theme
+from clinews.translation import TranslationError, translate_to_portuguese
 
 
 RSS = b'''<?xml version="1.0"?><rss version="2.0"><channel><title>Noticias de Teste</title>
@@ -37,6 +41,42 @@ class Handler(BaseHTTPRequestHandler):
 
 
 class AppTest(unittest.TestCase):
+    def test_google_translation_request_and_response(self):
+        payload = {"data": {"translations": [
+            {"translatedText": "Ciência &amp; tecnologia", "detectedSourceLanguage": "en"},
+            {"translatedText": "Um resumo útil.", "detectedSourceLanguage": "en"},
+        ]}}
+
+        class Response(io.BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                self.close()
+
+        def fake_open(request, timeout):
+            self.assertEqual(timeout, 15)
+            self.assertIn("key=chave-teste", request.full_url)
+            self.assertEqual(request.get_method(), "POST")
+            self.assertEqual(json.loads(request.data), {
+                "q": ["Science & technology", "A useful summary."],
+                "target": "pt-BR", "format": "text",
+            })
+            return Response(json.dumps(payload).encode())
+
+        with patch.dict("os.environ", {"CLINEWS_GOOGLE_TRANSLATE_API_KEY": "chave-teste"}), \
+                patch("clinews.translation.urlopen", side_effect=fake_open):
+            self.assertEqual(translate_to_portuguese("Science & technology", "A useful summary."),
+                             ("Ciência & tecnologia", "Um resumo útil.", "EN"))
+
+    def test_google_translation_reports_api_error(self):
+        error = HTTPError("https://translation.googleapis.com", 403, "Forbidden", {},
+                          io.BytesIO(b'{"error":{"message":"API key not valid"}}'))
+        with patch.dict("os.environ", {"CLINEWS_GOOGLE_TRANSLATE_API_KEY": "chave-teste"}), \
+                patch("clinews.translation.urlopen", side_effect=error):
+            with self.assertRaisesRegex(TranslationError, "403: API key not valid"):
+                translate_to_portuguese("Hello", "")
+
     def test_snap_uses_persistent_user_directory(self):
         with tempfile.TemporaryDirectory() as temp:
             with patch.dict("os.environ", {"SNAP_USER_COMMON": temp, "XDG_DATA_HOME": "/not-used",

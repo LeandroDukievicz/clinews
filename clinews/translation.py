@@ -49,13 +49,11 @@ def translate_to_portuguese(title: str, summary: str) -> tuple[str, str, str]:
         "CLINEWS_GOOGLE_TRANSLATE_API_URL",
         "https://translation.googleapis.com/language/translate/v2",
     ).rstrip("/")
-    body = urlencode([("q", text) for text in texts] + [
-        ("target", "pt-BR"), ("format", "text"), ("key", api_key)
-    ]).encode("utf-8")
+    body = json.dumps({"q": texts, "target": "pt-BR", "format": "text"}).encode("utf-8")
     request = Request(
-        endpoint,
+        f"{endpoint}{'&' if '?' in endpoint else '?'}{urlencode({'key': api_key})}",
         data=body,
-        headers={"Content-Type": "application/x-www-form-urlencoded", "User-Agent": "clinews/0.2"},
+        headers={"Content-Type": "application/json; charset=utf-8", "User-Agent": "clinews/0.2.3"},
         method="POST",
     )
     try:
@@ -73,10 +71,12 @@ def translate_to_portuguese(title: str, summary: str) -> tuple[str, str, str]:
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise TranslationError("A API de tradução retornou uma resposta inválida.") from exc
 
-    translations = result.get("data", {}).get("translations", [])
-    if len(translations) != len(texts):
+    translations = result.get("data", {}).get("translations", []) if isinstance(result, dict) else []
+    if not isinstance(translations, list) or len(translations) != len(texts) or not all(
+        isinstance(item, dict) for item in translations
+    ):
         raise TranslationError("A API não retornou todos os textos traduzidos.")
-    detected = (translations[0].get("detectedSourceLanguage") or "").upper()
+    detected = (translations[-1].get("detectedSourceLanguage") or "").upper()
     if detected != "EN":
         raise TranslationError("Esta matéria não parece estar em inglês.")
     translated_title = html.unescape(translations[0].get("translatedText", ""))
