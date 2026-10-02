@@ -28,9 +28,9 @@ THEMES: dict[str, dict[str, str]] = {
     "Midnight": dict(bg="#011627", fg="#D6DEEB", surface="#0B253A", muted="#89A4BB",
                      accent="#82AAFF", accent2="#C792EA", selection="#1D3B53",
                      selected_fg="#FFFFFF", unread="#22DA6E", link="#7FDBCA"),
-    "Zenmode": dict(bg="#DDF6E1", fg="#1B3A2A", surface="#B4DCC2", muted="#4D6B56",
-                    accent="#0A6D2A", accent2="#287D60", selection="#98CDAA",
-                    selected_fg="#163E29", unread="#0A6D2A", link="#086B5C"),
+    "Zenmode": dict(bg="#003d31", fg="#00b3ff", surface="#004639", muted="#9EDCD6",
+                    accent="#6EE7FF", accent2="#7AF0C5", selection="#00B3FF",
+                    selected_fg="#002B23", unread="#62E6A7", link="#67D5FF"),
 }
 
 
@@ -70,9 +70,13 @@ def nearest_xterm(hex_color: str) -> int:
 
 
 def xterm_theme_color(name: str, role: str) -> int:
-    """Preserva os azuis escuros Night Owl que virariam cinza na paleta xterm."""
+    """Preserva fundos escuros e contraste dos temas na paleta xterm."""
     if name == "Midnight":
         overrides = {"bg": 17, "surface": 18, "selection": 24}
+        if role in overrides:
+            return overrides[role]
+    if name == "Zenmode":
+        overrides = {"bg": 23, "fg": 81}
         if role in overrides:
             return overrides[role]
     return nearest_xterm(THEMES[name][role])

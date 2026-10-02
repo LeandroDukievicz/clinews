@@ -67,7 +67,7 @@ Pressione `t`, escolha com `j`/`k` ou as setas e pressione `Enter`. A prévia mu
 | FullDark | Preto com verdes vivos |
 | SunMode | Fundo branco com texto escuro |
 | Midnight | Azul e roxo da [paleta Night Owl](https://github.com/sdras/night-owl-vscode-theme/blob/main/themes/Night%20Owl-color-theme.json) |
-| Zenmode | Fundo verde bem claro, com texto e destaques verde-escuros |
+| Zenmode | Fundo verde-escuro `#003d31`, texto azul-ciano `#00b3ff` e destaques claros |
 
 Em terminais de 256 cores, as cores são aproximadas à paleta do terminal. Em terminais de 8 cores, o aplicativo usa a opção disponível mais próxima.
 

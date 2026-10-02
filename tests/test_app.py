@@ -58,6 +58,7 @@ class AppTest(unittest.TestCase):
                 with self.subTest(theme=name, role=role):
                     self.assertGreaterEqual(contrast(palette[role], palette["bg"]), 4.5)
             self.assertGreaterEqual(contrast(palette["selected_fg"], palette["selection"]), 4.5)
+        self.assertGreaterEqual(contrast(THEMES["Zenmode"]["fg"], THEMES["Zenmode"]["surface"]), 4.5)
 
     def test_google_translation_request_and_response(self):
         payload = {"data": {"translations": [
@@ -117,7 +118,8 @@ class AppTest(unittest.TestCase):
         self.assertEqual(nearest_xterm("#FFFFFF"), 231)
         self.assertEqual(xterm_theme_color("Midnight", "bg"), 17)
         self.assertEqual(xterm_theme_color("NeoTokio", "bg"), 23)
-        self.assertEqual(xterm_theme_color("Zenmode", "bg"), 194)
+        self.assertEqual(xterm_theme_color("Zenmode", "bg"), 23)
+        self.assertEqual(xterm_theme_color("Zenmode", "fg"), 81)
 
     def test_atom_feed(self):
         atom = b'''<feed xmlns="http://www.w3.org/2005/Atom"><title>Atom Teste</title>
