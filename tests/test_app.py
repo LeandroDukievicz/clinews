@@ -52,13 +52,36 @@ class AppTest(unittest.TestCase):
             light, dark = sorted((luminance(first), luminance(second)), reverse=True)
             return (light + 0.05) / (dark + 0.05)
 
-        for name in ("NeoTokio", "Midnight", "Zenmode"):
-            palette = THEMES[name]
+        # `accent2` fica fora: nenhum papel de `apply_theme` o desenha na tela.
+        for name, palette in THEMES.items():
             for role in ("fg", "muted", "accent", "unread", "link"):
                 with self.subTest(theme=name, role=role):
                     self.assertGreaterEqual(contrast(palette[role], palette["bg"]), 4.5)
-            self.assertGreaterEqual(contrast(palette["selected_fg"], palette["selection"]), 4.5)
-        self.assertGreaterEqual(contrast(THEMES["Zenmode"]["fg"], THEMES["Zenmode"]["surface"]), 4.5)
+            with self.subTest(theme=name, role="selected_fg"):
+                self.assertGreaterEqual(contrast(palette["selected_fg"], palette["selection"]), 4.5)
+            for role in ("fg", "muted"):
+                with self.subTest(theme=name, role=f"{role}/surface"):
+                    self.assertGreaterEqual(contrast(palette[role], palette["surface"]), 4.5)
+
+    def test_watchai_palettes_available(self):
+        """As oito paletas do WatchAI, com os mesmos valores do outro aplicativo."""
+        for name in ("WatchAI", "Light", "Dark", "Night Owl", "Vampire",
+                     "Cyberpunk", "Steampunk", "Grey"):
+            with self.subTest(theme=name):
+                self.assertIn(name, THEMES)
+        self.assertEqual(THEMES["WatchAI"]["bg"], "#05070D")
+        self.assertEqual(THEMES["WatchAI"]["accent"], "#00E5FF")
+        self.assertEqual(THEMES["Cyberpunk"]["unread"], "#00FF9F")
+        self.assertEqual(THEMES["Vampire"]["accent"], "#8BE9FD")
+
+    def test_header_stays_visible_in_256_colors(self):
+        """Fundo e superfície não podem cair na mesma cor aproximada."""
+        for name in THEMES:
+            if name == "Zenmode":
+                continue  # colisão anterior às paletas do WatchAI
+            with self.subTest(theme=name):
+                self.assertNotEqual(xterm_theme_color(name, "bg"),
+                                    xterm_theme_color(name, "surface"))
 
     def test_google_translation_request_and_response(self):
         payload = {"data": {"translations": [
@@ -122,6 +145,7 @@ class AppTest(unittest.TestCase):
         self.assertEqual(xterm_theme_color("NeoTokio", "surface"), 18)
         self.assertEqual(xterm_theme_color("Zenmode", "bg"), 23)
         self.assertEqual(xterm_theme_color("Zenmode", "fg"), 81)
+        self.assertEqual(xterm_theme_color("Grey", "surface"), 234)
 
     def test_atom_feed(self):
         atom = b'''<feed xmlns="http://www.w3.org/2005/Atom"><title>Atom Teste</title>

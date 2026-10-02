@@ -53,7 +53,7 @@ export CLINEWS_GOOGLE_TRANSLATE_API_KEY='sua-chave-do-google-cloud'
 python3 -m clinews
 ```
 
-O Google Cloud oferece crédito mensal equivalente aos primeiros 500 mil caracteres de tradução; depois disso, o uso é cobrado por caractere conforme a [tabela de preços](https://cloud.google.com/translate/pricing). A API detecta o idioma de origem; o clinews só mostra a tradução se o texto for identificado como inglês. Traduções ficam em cache no banco local, então abrir de novo uma notícia já traduzida não faz outra solicitação. Somente o título e o resumo que vieram no RSS são enviados; artigos cujo feed não fornece resumo continuam limitados ao título. O tempo limite de conexão é de 15 segundos.
+O Google Cloud oferece crédito mensal equivalente aos primeiros 500 mil caracteres de tradução; depois disso, o uso é cobrado por caractere conforme a [tabela de preços](https://cloud.google.com/translate/pricing). A API detecta o idioma de origem; o clinews traduz qualquer matéria que não esteja já em português. O idioma é lido do texto mais longo enviado, porque a detecção erra com frequência em títulos curtos. Traduções ficam em cache no banco local, então abrir de novo uma notícia já traduzida não faz outra solicitação. Somente o título e o resumo que vieram no RSS são enviados; artigos cujo feed não fornece resumo continuam limitados ao título. O tempo limite de conexão é de 15 segundos.
 
 As sugestões incluem fontes em português e inglês de notícias, tecnologia, ciência, economia e cultura. Os endereços vêm das páginas das próprias fontes, como os [feeds da Agência Brasil](https://agenciabrasil.ebc.com.br/feed/), o [feed do Manual do Usuário](https://manualdousuario.net/acompanhe/) e os [feeds da NASA](https://www.nasa.gov/rss-feeds/). A disponibilidade de cada feed é conferida ao adicioná-lo; se um endereço deixar de funcionar, o app mostra o erro e continua com as outras fontes escolhidas.
 
@@ -61,15 +61,26 @@ As sugestões incluem fontes em português e inglês de notícias, tecnologia, c
 
 Pressione `t`, escolha com `j`/`k` ou as setas e pressione `Enter`. A prévia muda de cor enquanto você navega. `Esc` cancela. A escolha fica em `~/.config/clinews/config.json` (ou `$XDG_CONFIG_HOME/clinews/config.json`) e também vale para o modo de demonstração.
 
+São catorze temas: seis desenhados para o clinews e as oito paletas do
+[WatchAI](https://github.com/LeandroDukievicz/WatchAI), com os mesmos valores de
+cor nos dois aplicativos.
+
 | Tema | Cores |
 | --- | --- |
-| Vampire | Roxo, rosa e ciano da [paleta Dracula](https://draculatheme.com/contribute) |
 | NeoTokio | Fundo azul-escuro `#020624`, com ciano e magenta em estilo cyberpunk |
 | OldCity | Cobre, bronze e sépia, inspirado em steampunk |
 | FullDark | Preto com verdes vivos |
 | SunMode | Fundo branco com texto escuro |
 | Midnight | Fundo roxo-escuro `#150e2e`, texto verde-água `#91ebe8` e destaques azuis e lilases |
 | Zenmode | Fundo verde-escuro `#003d31`, texto azul-ciano `#00b3ff` e destaques claros |
+| WatchAI | Quase preto `#05070D` com ciano elétrico `#00E5FF` e magenta |
+| Light | Fundo branco `#FBFCFD` com texto escuro e acentos em teal |
+| Dark | Cinza-azulado `#0D1117` com ciano suave, no estilo do GitHub escuro |
+| Night Owl | Azul-marinho `#011627` com verde-água `#7FDBCA` e lilás |
+| Vampire | Roxo, rosa e ciano da [paleta Dracula](https://draculatheme.com/contribute) |
+| Cyberpunk | Preto arroxeado `#05010A` com ciano `#00F0FF` e magenta `#FF00A0` |
+| Steampunk | Marrom escuro `#140F0A` com verdete, cobre e latão |
+| Grey | Sem matiz: os papéis se separam apenas por brilho |
 
 Em terminais de 256 cores, as cores são aproximadas à paleta do terminal. Em terminais de 8 cores, o aplicativo usa a opção disponível mais próxima.
 

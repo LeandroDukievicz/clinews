@@ -16,8 +16,9 @@ description: |
   notícias recebidas ficam salvas localmente para consulta sem conexão. A
   atualização é manual, pelo atalho `r`.
 
-  O aplicativo oferece sete temas: Vampire, NeoTokio, OldCity, FullDark,
-  SunMode, Midnight e Zenmode. Em notícias em inglês, o atalho `t` na tela de
+  O aplicativo oferece catorze temas: NeoTokio, OldCity, FullDark, SunMode,
+  Midnight, Zenmode, WatchAI, Light, Dark, Night Owl, Vampire, Cyberpunk,
+  Steampunk e Grey. Em notícias em outro idioma, o atalho `t` na tela de
   leitura traduz o título e o resumo para português do Brasil usando a Google
   Cloud Translation API. Esse recurso é opcional, exige uma chave de API própria
   e guarda as traduções já feitas no computador.
