@@ -1,7 +1,5 @@
 # clinews
 
-![Logo em pixel art do clinews](assets/clinews-logo.png)
-
 Prévia funcional de um leitor de notícias por RSS para o terminal. Na primeira abertura, você escolhe fontes sugeridas por assunto ou cola o endereço de um site. O `clinews` salva as fontes e mostra as notícias no terminal.
 
 Landing page: [leandrodukievicz.github.io/clinews](https://leandrodukievicz.github.io/clinews/).
@@ -9,7 +7,7 @@ Landing page: [leandrodukievicz.github.io/clinews](https://leandrodukievicz.gith
 A landing page mostra capturas reais da lista de notícias, das sugestões de fontes, da leitura e do seletor de temas no modo de demonstração.
 As versões para a galeria da Snap Store ficam em [assets/store-screenshots](assets/store-screenshots).
 
-O arquivo [assets/clinews-logo.png](assets/clinews-logo.png) é o logo do projeto e o ícone do aplicativo. A interface do terminal abre direto nas fontes e notícias para aproveitar melhor o espaço de leitura.
+O ícone do aplicativo fica em [assets/clinews-snap-icon.png](assets/clinews-snap-icon.png). A interface do terminal abre direto nas fontes e notícias para aproveitar melhor o espaço de leitura.
 
 ```text
  CLINEWS  ●  5 não lidas  •  Midnight
@@ -77,7 +75,7 @@ Os dados são guardados em `~/.local/share/clinews/clinews.db` ou em `$XDG_DATA_
 
 ## Pacote Snap
 
-O manifesto em [snap/snapcraft.yaml](snap/snapcraft.yaml) usa `core24` e isolamento estrito. Ele solicita acesso à rede para buscar feeds e ao desktop para abrir links no navegador. O ícone da loja é uma versão de 512×512 do logo do projeto.
+O manifesto em [snap/snapcraft.yaml](snap/snapcraft.yaml) usa `core24` e isolamento estrito. Ele solicita acesso à rede para buscar feeds e ao desktop para abrir links no navegador. O ícone da loja tem 512×512 pixels.
 
 Para gerar e testar o pacote em uma máquina com Snapcraft e LXD configurados:
 
