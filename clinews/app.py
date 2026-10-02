@@ -17,7 +17,7 @@ from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree as ET
 
-from .themes import THEMES, basic_color, load_theme, nearest_xterm, save_theme
+from .themes import THEMES, basic_color, load_theme, save_theme, xterm_theme_color
 from .suggestions import SUGGESTIONS, Suggestion
 from .translation import TranslationError, load_api_key, save_api_key, translate_to_portuguese
 
@@ -272,10 +272,12 @@ def apply_theme(stdscr: curses.window, name: str) -> dict[str, int]:
         styles["header"] = styles["footer"] = styles["selected"] = curses.A_REVERSE
         return styles
     curses.start_color()
-    convert = nearest_xterm if curses.COLORS >= 256 else basic_color
     palette = THEMES[name]
+    convert = (lambda role: xterm_theme_color(name, role)) if curses.COLORS >= 256 else (
+        lambda role: basic_color(palette[role])
+    )
     for index, (role, (foreground, background)) in enumerate(roles.items(), 1):
-        curses.init_pair(index, convert(palette[foreground]), convert(palette[background]))
+        curses.init_pair(index, convert(foreground), convert(background))
         styles[role] = curses.color_pair(index)
     stdscr.bkgd(" ", styles["body"])
     return styles

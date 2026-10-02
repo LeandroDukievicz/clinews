@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 
 from clinews.app import add_site, data_path, open_db, parse_feed, refresh
-from clinews.themes import DEFAULT_THEME, THEMES, config_path, load_theme, nearest_xterm, save_theme
+from clinews.themes import DEFAULT_THEME, THEMES, config_path, load_theme, nearest_xterm, save_theme, xterm_theme_color
 from clinews.translation import TranslationError, translate_to_portuguese
 
 
@@ -41,6 +41,24 @@ class Handler(BaseHTTPRequestHandler):
 
 
 class AppTest(unittest.TestCase):
+    def test_readable_theme_contrast(self):
+        def luminance(color):
+            channels = [int(color[index:index + 2], 16) / 255 for index in (1, 3, 5)]
+            linear = [value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+                      for value in channels]
+            return sum(value * weight for value, weight in zip(linear, (0.2126, 0.7152, 0.0722)))
+
+        def contrast(first, second):
+            light, dark = sorted((luminance(first), luminance(second)), reverse=True)
+            return (light + 0.05) / (dark + 0.05)
+
+        for name in ("NeoTokio", "Midnight", "Zenmode"):
+            palette = THEMES[name]
+            for role in ("fg", "muted", "accent", "unread", "link"):
+                with self.subTest(theme=name, role=role):
+                    self.assertGreaterEqual(contrast(palette[role], palette["bg"]), 4.5)
+            self.assertGreaterEqual(contrast(palette["selected_fg"], palette["selection"]), 4.5)
+
     def test_google_translation_request_and_response(self):
         payload = {"data": {"translations": [
             {"translatedText": "Ciência &amp; tecnologia", "detectedSourceLanguage": "en"},
@@ -97,6 +115,9 @@ class AppTest(unittest.TestCase):
     def test_xterm_color_approximation(self):
         self.assertEqual(nearest_xterm("#000000"), 16)
         self.assertEqual(nearest_xterm("#FFFFFF"), 231)
+        self.assertEqual(xterm_theme_color("Midnight", "bg"), 17)
+        self.assertEqual(xterm_theme_color("NeoTokio", "bg"), 23)
+        self.assertEqual(xterm_theme_color("Zenmode", "bg"), 194)
 
     def test_atom_feed(self):
         atom = b'''<feed xmlns="http://www.w3.org/2005/Atom"><title>Atom Teste</title>

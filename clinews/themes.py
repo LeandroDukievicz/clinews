@@ -14,10 +14,10 @@ THEMES: dict[str, dict[str, str]] = {
                     accent="#BD93F9", accent2="#FF79C6", selection="#44475A",
                     selected_fg="#F8F8F2", unread="#50FA7B", link="#8BE9FD",
                     logo_border="#BD93F9", logo_paper="#F8F8F2", logo_cyan="#8BE9FD", logo_rss="#FF79C6"),
-    "NeoTokio": dict(bg="#061A2F", fg="#E6F7FF", surface="#0D2942", muted="#8DAFC5",
-                      accent="#36E6F2", accent2="#FF4FD8", selection="#17415F",
-                      selected_fg="#FFFFFF", unread="#FF4FD8", link="#36E6F2",
-                      logo_border="#FF4FD8", logo_paper="#E6F7FF", logo_cyan="#36E6F2", logo_rss="#FF4FD8"),
+    "NeoTokio": dict(bg="#0B4550", fg="#E6F7FA", surface="#164F60", muted="#AACBD0",
+                      accent="#58E6EE", accent2="#FF89E0", selection="#236774",
+                      selected_fg="#FFFFFF", unread="#FF89E0", link="#58E6EE",
+                      logo_border="#FF89E0", logo_paper="#E6F7FA", logo_cyan="#58E6EE", logo_rss="#FF89E0"),
     "OldCity": dict(bg="#211B16", fg="#E8D7B0", surface="#3C3025", muted="#B5A181",
                      accent="#C88B3A", accent2="#A5693F", selection="#5A4230",
                      selected_fg="#FFF3D4", unread="#D7B56D", link="#E4B973",
@@ -30,14 +30,14 @@ THEMES: dict[str, dict[str, str]] = {
                      accent="#176A72", accent2="#C48239", selection="#CFE9E9",
                      selected_fg="#10262A", unread="#137048", link="#0B6675",
                      logo_border="#176A72", logo_paper="#FFFFFF", logo_cyan="#36A6B2", logo_rss="#C48239"),
-    "Midnight": dict(bg="#011627", fg="#D6DEEB", surface="#0B2942", muted="#89A4BB",
-                     accent="#82AAFF", accent2="#C792EA", selection="#234D70",
+    "Midnight": dict(bg="#011627", fg="#D6DEEB", surface="#0B253A", muted="#89A4BB",
+                     accent="#82AAFF", accent2="#C792EA", selection="#1D3B53",
                      selected_fg="#FFFFFF", unread="#22DA6E", link="#7FDBCA",
                      logo_border="#82AAFF", logo_paper="#D6DEEB", logo_cyan="#7FDBCA", logo_rss="#C792EA"),
-    "Zenmode": dict(bg="#EFF9F1", fg="#1B4035", surface="#DDEEE1", muted="#537866",
-                    accent="#388B69", accent2="#7CBAA2", selection="#BFDFC9",
-                    selected_fg="#173C32", unread="#26805C", link="#287E69",
-                    logo_border="#388B69", logo_paper="#FFFFFF", logo_cyan="#7CBAA2", logo_rss="#71AE80"),
+    "Zenmode": dict(bg="#DDF6E1", fg="#1B3A2A", surface="#B4DCC2", muted="#4D6B56",
+                    accent="#0A6D2A", accent2="#287D60", selection="#98CDAA",
+                    selected_fg="#163E29", unread="#0A6D2A", link="#086B5C",
+                    logo_border="#0A6D2A", logo_paper="#FFFFFF", logo_cyan="#287D60", logo_rss="#287D60"),
 }
 
 
@@ -74,6 +74,15 @@ def nearest_xterm(hex_color: str) -> int:
                   for r in range(6) for g in range(6) for b in range(6)]
     candidates.extend((232 + n, (8 + 10 * n,) * 3) for n in range(24))
     return min(candidates, key=lambda item: sum((a - b) ** 2 for a, b in zip(rgb, item[1])))[0]
+
+
+def xterm_theme_color(name: str, role: str) -> int:
+    """Preserva os azuis escuros Night Owl que virariam cinza na paleta xterm."""
+    if name == "Midnight":
+        overrides = {"bg": 17, "surface": 18, "selection": 24}
+        if role in overrides:
+            return overrides[role]
+    return nearest_xterm(THEMES[name][role])
 
 
 def basic_color(hex_color: str) -> int:
