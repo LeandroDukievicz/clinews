@@ -81,7 +81,7 @@ Para gerar e testar o pacote em uma máquina com Snapcraft e LXD configurados:
 
 ```bash
 snapcraft pack --use-lxd
-sudo snap install --dangerous ./clinews_0.2.3_amd64.snap
+sudo snap install --dangerous ./clinews_0.2.4_amd64.snap
 clinews --demo
 ```
 

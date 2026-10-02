@@ -53,7 +53,7 @@ def translate_to_portuguese(title: str, summary: str) -> tuple[str, str, str]:
     request = Request(
         f"{endpoint}{'&' if '?' in endpoint else '?'}{urlencode({'key': api_key})}",
         data=body,
-        headers={"Content-Type": "application/json; charset=utf-8", "User-Agent": "clinews/0.2.3"},
+        headers={"Content-Type": "application/json; charset=utf-8", "User-Agent": "clinews/0.2.4"},
         method="POST",
     )
     try:
