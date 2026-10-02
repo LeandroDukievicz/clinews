@@ -38,6 +38,8 @@ python3 -m clinews
 
 Execute os comandos a partir de `~/Projetos/clinews`.
 
+No GNOME, o lançador em [desktop/clinews.desktop](desktop/clinews.desktop) abre o Snap em uma janela de terminal com o título `clinews`.
+
 Na primeira abertura, aparece uma lista de fontes sugeridas. Use `j`/`k` ou as setas, `Espaço` para marcar quantas quiser e `Enter` para adicioná-las. A tecla `a` nessa tela abre o cadastro manual; `Esc` permite seguir sem adicionar nada. Nenhuma sugestão é cadastrada sem sua escolha. Depois, use `s` para reabrir a lista a qualquer momento. Fontes já cadastradas aparecem marcadas e não são adicionadas de novo.
 
 Para cadastrar um site próprio, pressione `a` e cole a URL do site ou do próprio feed. Se o site divulgar RSS/Atom na página, o endereço do feed é encontrado automaticamente. `r` busca notícias novas. `Tab` muda entre fontes e notícias; `j`/`k` ou as setas movem a seleção; `Enter` abre a notícia no leitor, com o link original ao final; `o` abre o link no navegador; `d` remove a fonte selecionada; `t` abre os temas; `q` sai. Dentro da leitura, `t` traduz o título e o resumo do feed do inglês para português e alterna de volta para o original.

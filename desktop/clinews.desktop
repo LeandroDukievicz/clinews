@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=clinews
+GenericName=Leitor de notícias RSS
+Comment=Leia notícias dos seus sites favoritos no terminal
+Exec=/usr/bin/gnome-terminal --title=clinews -- /snap/bin/clinews
+Icon=/snap/clinews/current/meta/gui/icon.png
+Terminal=false
+Categories=Network;News;ConsoleOnly;
+Keywords=rss;atom;feed;noticias;terminal;tui;
+StartupNotify=false
