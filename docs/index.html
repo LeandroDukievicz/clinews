@@ -11,6 +11,7 @@
   <title>clinews — suas notícias, no seu terminal</title>
   <link rel="icon" type="image/png" href="assets/clinews-snap-icon.png">
   <link rel="stylesheet" href="site.css">
+  <script src="site.js" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -52,25 +53,33 @@
         <div class="section-heading">
           <span class="eyebrow">Por dentro do app</span>
           <h2>Da escolha das fontes à leitura.</h2>
-          <p>Capturas da TUI real no modo de demonstração, com dados fictícios. Clique em uma imagem para ampliá-la.</p>
+          <p>Explore as telas reais da TUI no modo de demonstração, com dados fictícios. Clique em uma imagem para ampliá-la.</p>
         </div>
-        <div class="screen-grid">
-          <figure class="screen-card">
-            <a href="assets/tela-noticias.png" target="_blank" rel="noopener"><img src="assets/tela-noticias.png" width="1096" height="431" loading="lazy" alt="Lista de fontes à esquerda e matérias não lidas à direita no tema Midnight"></a>
-            <figcaption><strong>Acompanhe as novidades</strong><span>Veja todas as matérias ou filtre por fonte. O ponto colorido marca o que ainda não foi lido.</span></figcaption>
-          </figure>
-          <figure class="screen-card">
-            <a href="assets/tela-fontes.png" target="_blank" rel="noopener"><img src="assets/tela-fontes.png" width="1096" height="431" loading="lazy" alt="Tela de sugestões de fontes com opções em português e inglês"></a>
-            <figcaption><strong>Escolha suas fontes</strong><span>Marque sugestões ou adicione manualmente o endereço de um site ou feed.</span></figcaption>
-          </figure>
-          <figure class="screen-card">
-            <a href="assets/tela-leitura.png" target="_blank" rel="noopener"><img src="assets/tela-leitura.png" width="1096" height="431" loading="lazy" alt="Tela de leitura com título, data, resumo e área para o link original"></a>
-            <figcaption><strong>Leia no terminal</strong><span>Veja o resumo do feed, encontre o link original e traduza textos em inglês quando quiser.</span></figcaption>
-          </figure>
-          <figure class="screen-card">
-            <a href="assets/tela-temas.png" target="_blank" rel="noopener"><img src="assets/tela-temas.png" width="1096" height="431" loading="lazy" alt="Seletor de temas do clinews mostrando sete paletas"></a>
-            <figcaption><strong>Ajuste as cores</strong><span>Escolha entre sete temas e veja a prévia antes de salvar.</span></figcaption>
-          </figure>
+        <div class="screen-demo" data-screen-demo>
+          <div class="screen-tabs" aria-label="Telas do clinews">
+            <button type="button" class="screen-tab" id="tab-noticias">Notícias</button>
+            <button type="button" class="screen-tab" id="tab-fontes">Fontes</button>
+            <button type="button" class="screen-tab" id="tab-leitura">Leitura</button>
+            <button type="button" class="screen-tab" id="tab-temas">Temas</button>
+          </div>
+          <div class="screen-grid">
+            <figure class="screen-card" id="panel-noticias">
+              <a href="assets/tela-noticias.png" target="_blank" rel="noopener"><img src="assets/tela-noticias.png" width="1096" height="431" loading="lazy" alt="Lista de fontes à esquerda e matérias não lidas à direita no tema Midnight"></a>
+              <figcaption><strong>Acompanhe as novidades</strong><span>Veja todas as matérias ou filtre por fonte. O ponto colorido marca o que ainda não foi lido.</span></figcaption>
+            </figure>
+            <figure class="screen-card" id="panel-fontes">
+              <a href="assets/tela-fontes.png" target="_blank" rel="noopener"><img src="assets/tela-fontes.png" width="1096" height="431" loading="lazy" alt="Tela de sugestões de fontes com opções em português e inglês"></a>
+              <figcaption><strong>Escolha suas fontes</strong><span>Marque sugestões ou adicione manualmente o endereço de um site ou feed.</span></figcaption>
+            </figure>
+            <figure class="screen-card" id="panel-leitura">
+              <a href="assets/tela-leitura.png" target="_blank" rel="noopener"><img src="assets/tela-leitura.png" width="1096" height="431" loading="lazy" alt="Tela de leitura com título, data, resumo e área para o link original"></a>
+              <figcaption><strong>Leia no terminal</strong><span>Veja o resumo do feed, encontre o link original e traduza textos em inglês quando quiser.</span></figcaption>
+            </figure>
+            <figure class="screen-card" id="panel-temas">
+              <a href="assets/tela-temas.png" target="_blank" rel="noopener"><img src="assets/tela-temas.png" width="1096" height="431" loading="lazy" alt="Seletor de temas do clinews mostrando sete paletas"></a>
+              <figcaption><strong>Ajuste as cores</strong><span>Escolha entre sete temas e veja a prévia antes de salvar.</span></figcaption>
+            </figure>
+          </div>
         </div>
       </div>
     </section>
