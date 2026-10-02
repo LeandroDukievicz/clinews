@@ -62,11 +62,11 @@ Pressione `t`, escolha com `j`/`k` ou as setas e pressione `Enter`. A prévia mu
 | Tema | Cores |
 | --- | --- |
 | Vampire | Roxo, rosa e ciano da [paleta Dracula](https://draculatheme.com/contribute) |
-| NeoTokio | Azul-petróleo com ciano e magenta, em estilo cyberpunk |
+| NeoTokio | Fundo azul-escuro `#020624`, com ciano e magenta em estilo cyberpunk |
 | OldCity | Cobre, bronze e sépia, inspirado em steampunk |
 | FullDark | Preto com verdes vivos |
 | SunMode | Fundo branco com texto escuro |
-| Midnight | Azul e roxo da [paleta Night Owl](https://github.com/sdras/night-owl-vscode-theme/blob/main/themes/Night%20Owl-color-theme.json) |
+| Midnight | Fundo roxo-escuro `#150e2e`, texto verde-água `#91ebe8` e destaques azuis e lilases |
 | Zenmode | Fundo verde-escuro `#003d31`, texto azul-ciano `#00b3ff` e destaques claros |
 
 Em terminais de 256 cores, as cores são aproximadas à paleta do terminal. Em terminais de 8 cores, o aplicativo usa a opção disponível mais próxima.

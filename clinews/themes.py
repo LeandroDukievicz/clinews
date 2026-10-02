@@ -8,14 +8,14 @@ from pathlib import Path
 
 DEFAULT_THEME = "Midnight"
 
-# Vampire usa Dracula; Midnight usa Night Owl. Os demais são paletas do clinews.
+# Vampire usa Dracula. Os demais são paletas do clinews.
 THEMES: dict[str, dict[str, str]] = {
     "Vampire": dict(bg="#282A36", fg="#F8F8F2", surface="#44475A", muted="#A3ACC7",
                     accent="#BD93F9", accent2="#FF79C6", selection="#44475A",
                     selected_fg="#F8F8F2", unread="#50FA7B", link="#8BE9FD"),
-    "NeoTokio": dict(bg="#0B4550", fg="#E6F7FA", surface="#164F60", muted="#AACBD0",
-                      accent="#58E6EE", accent2="#FF89E0", selection="#236774",
-                      selected_fg="#FFFFFF", unread="#FF89E0", link="#58E6EE"),
+    "NeoTokio": dict(bg="#020624", fg="#8BEFFD", surface="#0A123B", muted="#8AB9C4",
+                      accent="#FF5BD6", accent2="#45E7F5", selection="#D83CB5",
+                      selected_fg="#020624", unread="#FF5BD6", link="#45E7F5"),
     "OldCity": dict(bg="#211B16", fg="#E8D7B0", surface="#3C3025", muted="#B5A181",
                      accent="#C88B3A", accent2="#A5693F", selection="#5A4230",
                      selected_fg="#FFF3D4", unread="#D7B56D", link="#E4B973"),
@@ -25,8 +25,8 @@ THEMES: dict[str, dict[str, str]] = {
     "SunMode": dict(bg="#FAFAF7", fg="#202A31", surface="#E9EDEB", muted="#5C686D",
                      accent="#176A72", accent2="#C48239", selection="#CFE9E9",
                      selected_fg="#10262A", unread="#137048", link="#0B6675"),
-    "Midnight": dict(bg="#011627", fg="#D6DEEB", surface="#0B253A", muted="#89A4BB",
-                     accent="#82AAFF", accent2="#C792EA", selection="#1D3B53",
+    "Midnight": dict(bg="#150e2e", fg="#91ebe8", surface="#251445", muted="#89A4BB",
+                     accent="#82AAFF", accent2="#C792EA", selection="#3A275D",
                      selected_fg="#FFFFFF", unread="#22DA6E", link="#7FDBCA"),
     "Zenmode": dict(bg="#003d31", fg="#00b3ff", surface="#004639", muted="#9EDCD6",
                     accent="#6EE7FF", accent2="#7AF0C5", selection="#00B3FF",
@@ -72,7 +72,11 @@ def nearest_xterm(hex_color: str) -> int:
 def xterm_theme_color(name: str, role: str) -> int:
     """Preserva fundos escuros e contraste dos temas na paleta xterm."""
     if name == "Midnight":
-        overrides = {"bg": 17, "surface": 18, "selection": 24}
+        overrides = {"bg": 53, "surface": 54, "selection": 60}
+        if role in overrides:
+            return overrides[role]
+    if name == "NeoTokio":
+        overrides = {"bg": 17, "surface": 18}
         if role in overrides:
             return overrides[role]
     if name == "Zenmode":

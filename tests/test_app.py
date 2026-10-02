@@ -116,8 +116,10 @@ class AppTest(unittest.TestCase):
     def test_xterm_color_approximation(self):
         self.assertEqual(nearest_xterm("#000000"), 16)
         self.assertEqual(nearest_xterm("#FFFFFF"), 231)
-        self.assertEqual(xterm_theme_color("Midnight", "bg"), 17)
-        self.assertEqual(xterm_theme_color("NeoTokio", "bg"), 23)
+        self.assertEqual(xterm_theme_color("Midnight", "bg"), 53)
+        self.assertEqual(xterm_theme_color("Midnight", "surface"), 54)
+        self.assertEqual(xterm_theme_color("NeoTokio", "bg"), 17)
+        self.assertEqual(xterm_theme_color("NeoTokio", "surface"), 18)
         self.assertEqual(xterm_theme_color("Zenmode", "bg"), 23)
         self.assertEqual(xterm_theme_color("Zenmode", "fg"), 81)
 
