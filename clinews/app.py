@@ -283,31 +283,46 @@ def apply_theme(stdscr: curses.window, name: str) -> dict[str, int]:
     return styles
 
 
-def prompt(stdscr: curses.window, label: str, styles: dict[str, int]) -> str:
-    height, width = stdscr.getmaxyx()
-    label = label[:max(1, width - 2)]
-    curses.echo()
-    curses.curs_set(1)
-    draw(stdscr, height - 1, 0, label, width, styles["footer"])
-    stdscr.refresh()
-    try:
-        value = stdscr.getstr(height - 1, min(len(label), width - 1), max(1, width - len(label) - 1))
-        return value.decode("utf-8", errors="replace").strip()
-    finally:
-        curses.noecho()
-        curses.curs_set(0)
+def prompt(stdscr: curses.window, label: str, styles: dict[str, int],
+           secret: bool = False) -> str:
+    """Lê uma linha no rodapé. `secret` esconde o texto atrás de asteriscos.
 
+    O texto digitado **rola** dentro do espaço que sobra na linha, em vez de
+    terminar ali: `stdscr.getstr` aceitava no máximo os caracteres restantes da
+    janela, então num terminal de 80 colunas uma chave de API de 39 caracteres
+    era cortada em 26 e a tradução respondia erro de chave inválida.
 
-def prompt_secret(stdscr: curses.window, label: str, styles: dict[str, int]) -> str:
-    height, width = stdscr.getmaxyx()
-    label = label[:max(1, width - 2)]
+    Enter confirma, Esc cancela (devolve ""), Ctrl-U limpa a linha.
+    """
+    typed = ""
     curses.noecho()
     curses.curs_set(1)
-    draw(stdscr, height - 1, 0, label, width, styles["footer"])
-    stdscr.refresh()
     try:
-        value = stdscr.getstr(height - 1, min(len(label), width - 1), max(1, width - len(label) - 1))
-        return value.decode("utf-8", errors="replace").strip()
+        while True:
+            height, width = stdscr.getmaxyx()
+            visible_label = label[:max(1, width - 2)]
+            room = max(1, width - len(visible_label) - 1)
+            tail = ("*" * len(typed) if secret else typed)[-room:]
+            draw(stdscr, height - 1, 0, visible_label + tail, width, styles["footer"])
+            try:
+                stdscr.move(height - 1, min(len(visible_label) + len(tail), width - 1))
+            except curses.error:
+                pass
+            stdscr.refresh()
+            try:
+                key = stdscr.get_wch()
+            except curses.error:
+                continue
+            if key in ("\n", "\r", curses.KEY_ENTER):
+                return typed.strip()
+            if key == "\x1b":
+                return ""
+            if key in ("\x7f", "\b", curses.KEY_BACKSPACE):
+                typed = typed[:-1]
+            elif key == "\x15":
+                typed = ""
+            elif isinstance(key, str) and key.isprintable():
+                typed += key
     finally:
         curses.curs_set(0)
 
@@ -358,7 +373,8 @@ def reader(stdscr: curses.window, db: sqlite3.Connection, article: sqlite3.Row,
                 if not cached:
                     api_key = load_api_key()
                     if not api_key:
-                        api_key = prompt_secret(stdscr, " Chave Google Cloud (entrada oculta; Enter cancela): ", styles)
+                        api_key = prompt(stdscr, " Chave Google Cloud (oculta; Enter confirma, Esc cancela): ",
+                                         styles, secret=True)
                         if not api_key:
                             status = "Tradução cancelada."
                             continue
@@ -372,7 +388,7 @@ def reader(stdscr: curses.window, db: sqlite3.Connection, article: sqlite3.Row,
                     stdscr.refresh()
                     try:
                         translated_title, translated_summary, source_language = translate_to_portuguese(
-                            article["title"], article["summary"]
+                            article["title"], article["summary"], api_key
                         )
                         db.execute("""INSERT OR REPLACE INTO translations
                             (article_id, title, summary, source_language, target_language)

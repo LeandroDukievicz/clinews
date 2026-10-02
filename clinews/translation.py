@@ -36,9 +36,13 @@ def save_api_key(api_key: str) -> None:
     target.chmod(0o600)
 
 
-def translate_to_portuguese(title: str, summary: str) -> tuple[str, str, str]:
-    """Traduz título e resumo para PT-BR e retorna também o idioma detectado."""
-    api_key = load_api_key()
+def translate_to_portuguese(title: str, summary: str, api_key: str = "") -> tuple[str, str, str]:
+    """Traduz título e resumo para PT-BR e retorna também o idioma detectado.
+
+    `api_key` recebe a chave que o usuário acabou de digitar; sem ela, a chave
+    vem do ambiente ou do arquivo de configuração.
+    """
+    api_key = api_key.strip() or load_api_key()
     if not api_key:
         raise TranslationError(
             "Configure CLINEWS_GOOGLE_TRANSLATE_API_KEY com sua chave do Google Cloud."
@@ -76,9 +80,13 @@ def translate_to_portuguese(title: str, summary: str) -> tuple[str, str, str]:
         isinstance(item, dict) for item in translations
     ):
         raise TranslationError("A API não retornou todos os textos traduzidos.")
-    detected = (translations[-1].get("detectedSourceLanguage") or "").upper()
-    if detected != "EN":
-        raise TranslationError("Esta matéria não parece estar em inglês.")
+    # O idioma sai do texto mais longo: num título de seis palavras a detecção
+    # erra com facilidade, e era isso que recusava matérias escritas em inglês.
+    # Recusar só o que já está em português também destrava os outros idiomas.
+    longest = max(range(len(texts)), key=lambda index: len(texts[index]))
+    detected = (translations[longest].get("detectedSourceLanguage") or "").upper()
+    if detected.startswith("PT"):
+        raise TranslationError("Esta matéria já está em português.")
     translated_title = html.unescape(translations[0].get("translatedText", ""))
     translated_summary = html.unescape(translations[1].get("translatedText", "")) if summary.strip() else ""
     if not translated_title or (summary.strip() and not translated_summary):

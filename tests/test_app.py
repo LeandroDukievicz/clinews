@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError
 
-from clinews.app import add_site, data_path, open_db, parse_feed, refresh
+from clinews.app import add_site, data_path, open_db, parse_feed, prompt, refresh
 from clinews.themes import DEFAULT_THEME, THEMES, config_path, load_theme, nearest_xterm, save_theme, xterm_theme_color
 from clinews.translation import TranslationError, translate_to_portuguese
 
@@ -38,6 +38,44 @@ class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, *args):
         pass
+
+
+class FakeWindow:
+    """O mínimo de `curses.window` que `prompt` usa, para testar sem terminal."""
+
+    def __init__(self, width, keys):
+        self.width = width
+        self.keys = list(keys)
+        self.drawn = []
+
+    def getmaxyx(self):
+        return 24, self.width
+
+    def addnstr(self, y, x, text, n, attr=0):
+        self.drawn.append(text[:n])
+
+    def move(self, y, x):
+        pass
+
+    def refresh(self):
+        pass
+
+    def get_wch(self):
+        return self.keys.pop(0)
+
+
+class FakeResponse(io.BytesIO):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.close()
+
+
+def fake_response(payload):
+    def opener(request, timeout):
+        return FakeResponse(json.dumps(payload).encode())
+    return opener
 
 
 class AppTest(unittest.TestCase):
@@ -110,6 +148,61 @@ class AppTest(unittest.TestCase):
                 patch("clinews.translation.urlopen", side_effect=fake_open):
             self.assertEqual(translate_to_portuguese("Science & technology", "A useful summary."),
                              ("Ciência & tecnologia", "Um resumo útil.", "EN"))
+
+    def test_long_api_key_survives_a_narrow_terminal(self):
+        """A chave inteira tem que voltar mesmo quando não cabe na linha."""
+        key = "AIza" + "b" * 35  # 39 caracteres, como as chaves do Google Cloud
+        window = FakeWindow(width=80, keys=[*key, "\n"])
+        with patch("curses.noecho"), patch("curses.curs_set"):
+            typed = prompt(window, " Chave Google Cloud (oculta; Enter confirma, Esc cancela): ",
+                           {"footer": 0}, secret=True)
+        self.assertEqual(typed, key)
+        self.assertFalse([line for line in window.drawn if "AIza" in line],
+                         "a chave não pode aparecer na tela")
+
+    def test_prompt_cancels_with_escape(self):
+        window = FakeWindow(width=80, keys=["h", "t", "t", "p", "\x1b"])
+        with patch("curses.noecho"), patch("curses.curs_set"):
+            self.assertEqual(prompt(window, " URL: ", {"footer": 0}), "")
+
+    def test_translation_accepts_languages_other_than_english(self):
+        payload = {"data": {"translations": [
+            {"translatedText": "Uma manchete", "detectedSourceLanguage": "de"},
+            {"translatedText": "Um resumo longo o bastante para a detecção.",
+             "detectedSourceLanguage": "de"},
+        ]}}
+        with patch.dict("os.environ", {"CLINEWS_GOOGLE_TRANSLATE_API_KEY": "chave-teste"}), \
+                patch("clinews.translation.urlopen", side_effect=fake_response(payload)):
+            _, _, detected = translate_to_portuguese("Eine Schlagzeile",
+                                                     "Eine ausreichend lange Zusammenfassung.")
+        self.assertEqual(detected, "DE")
+
+    def test_translation_refuses_text_already_in_portuguese(self):
+        payload = {"data": {"translations": [
+            {"translatedText": "Uma manchete", "detectedSourceLanguage": "pt"},
+            {"translatedText": "Um resumo qualquer, bem mais longo que o título.",
+             "detectedSourceLanguage": "pt-BR"},
+        ]}}
+        with patch.dict("os.environ", {"CLINEWS_GOOGLE_TRANSLATE_API_KEY": "chave-teste"}), \
+                patch("clinews.translation.urlopen", side_effect=fake_response(payload)):
+            with self.assertRaisesRegex(TranslationError, "já está em português"):
+                translate_to_portuguese("Uma manchete",
+                                        "Um resumo qualquer, bem mais longo que o titulo.")
+
+    def test_translation_uses_the_key_received_from_the_prompt(self):
+        """A chave digitada vai direto para a requisição, sem reler o disco."""
+        payload = {"data": {"translations": [{"translatedText": "Oi", "detectedSourceLanguage": "en"}]}}
+        urls = []
+
+        def capture(request, timeout):
+            urls.append(request.full_url)
+            return fake_response(payload)(request, timeout)
+
+        with patch.dict("os.environ", {"CLINEWS_GOOGLE_TRANSLATE_API_KEY": ""}), \
+                patch("clinews.translation.load_api_key", return_value=""), \
+                patch("clinews.translation.urlopen", side_effect=capture):
+            translate_to_portuguese("Hi", "", "chave-do-prompt")
+        self.assertIn("key=chave-do-prompt", urls[0])
 
     def test_google_translation_reports_api_error(self):
         error = HTTPError("https://translation.googleapis.com", 403, "Forbidden", {},
