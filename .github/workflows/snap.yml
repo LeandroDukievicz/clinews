@@ -24,18 +24,19 @@ jobs:
       - name: Rodar os testes
         run: PYTHONPATH=. python3 -m unittest tests.test_app
 
-      # A versão mora em dois arquivos e a loja recebe a do snapcraft.yaml.
-      # Numa tag os três têm que dizer o mesmo número, senão o repositório fica
-      # marcando uma versão que não existe na Snap Store.
+      # O pacote Python tira a versão de clinews/__init__.py, mas o snapcraft.yaml
+      # carrega a sua própria cópia e é ela que a loja recebe. Numa tag os três
+      # têm que dizer o mesmo número, senão o repositório fica marcando uma
+      # versão que não existe na Snap Store.
       - name: Conferir se a tag bate com a versão
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           yaml=$(sed -n "s/^version:[[:space:]]*['\"]\{0,1\}\([^'\"]*\)['\"]\{0,1\}[[:space:]]*$/\1/p" snap/snapcraft.yaml)
-          toml=$(sed -n 's/^version[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' pyproject.toml)
+          pkg=$(sed -n 's/^__version__[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' clinews/__init__.py)
           tag=${GITHUB_REF_NAME#v}
-          echo "snapcraft.yaml=$yaml  pyproject.toml=$toml  tag=$tag"
-          if [ -z "$yaml" ] || [ "$yaml" != "$tag" ] || [ "$toml" != "$tag" ]; then
-            echo "::error::versão divergente entre snapcraft.yaml, pyproject.toml e a tag"
+          echo "snapcraft.yaml=$yaml  clinews/__init__.py=$pkg  tag=$tag"
+          if [ -z "$yaml" ] || [ "$yaml" != "$tag" ] || [ "$pkg" != "$tag" ]; then
+            echo "::error::versão divergente entre snapcraft.yaml, clinews/__init__.py e a tag"
             exit 1
           fi
 
