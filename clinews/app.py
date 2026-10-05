@@ -20,7 +20,7 @@ from xml.etree import ElementTree as ET
 from . import __version__
 from .themes import THEMES, basic_color, load_theme, save_theme, xterm_theme_color
 from .suggestions import SUGGESTIONS, Suggestion
-from .translation import TranslationError, load_api_key, save_api_key, translate_to_portuguese
+from .translation import TranslationError, translate_to_portuguese
 
 USER_AGENT = f"clinews/{__version__} (+terminal RSS reader)"
 ATOM = "{http://www.w3.org/2005/Atom}"
@@ -284,14 +284,13 @@ def apply_theme(stdscr: curses.window, name: str) -> dict[str, int]:
     return styles
 
 
-def prompt(stdscr: curses.window, label: str, styles: dict[str, int],
-           secret: bool = False) -> str:
-    """Lê uma linha no rodapé. `secret` esconde o texto atrás de asteriscos.
+def prompt(stdscr: curses.window, label: str, styles: dict[str, int]) -> str:
+    """Lê uma linha no rodapé.
 
     O texto digitado **rola** dentro do espaço que sobra na linha, em vez de
     terminar ali: `stdscr.getstr` aceitava no máximo os caracteres restantes da
-    janela, então num terminal de 80 colunas uma chave de API de 39 caracteres
-    era cortada em 26 e a tradução respondia erro de chave inválida.
+    janela, então num terminal estreito o endereço de um feed era cortado no
+    meio e o cadastro falhava sem dizer por quê.
 
     Enter confirma, Esc cancela (devolve ""), Ctrl-U limpa a linha.
     """
@@ -303,7 +302,7 @@ def prompt(stdscr: curses.window, label: str, styles: dict[str, int],
             height, width = stdscr.getmaxyx()
             visible_label = label[:max(1, width - 2)]
             room = max(1, width - len(visible_label) - 1)
-            tail = ("*" * len(typed) if secret else typed)[-room:]
+            tail = typed[-room:]
             draw(stdscr, height - 1, 0, visible_label + tail, width, styles["footer"])
             try:
                 stdscr.move(height - 1, min(len(visible_label) + len(tail), width - 1))
@@ -372,24 +371,13 @@ def reader(stdscr: curses.window, db: sqlite3.Connection, article: sqlite3.Row,
                 status = "Texto original."
             else:
                 if not cached:
-                    api_key = load_api_key()
-                    if not api_key:
-                        api_key = prompt(stdscr, " Chave Google Cloud (oculta; Enter confirma, Esc cancela): ",
-                                         styles, secret=True)
-                        if not api_key:
-                            status = "Tradução cancelada."
-                            continue
-                        try:
-                            save_api_key(api_key)
-                        except OSError as exc:
-                            status = f"Não foi possível salvar a chave localmente: {exc}"
-                            continue
+                    # A API do MyMemory é aberta: traduzir não pede nada antes.
                     status = "Traduzindo título e resumo do feed..."
                     draw(stdscr, height - 2, 0, status, width, styles["status"])
                     stdscr.refresh()
                     try:
                         translated_title, translated_summary, source_language = translate_to_portuguese(
-                            article["title"], article["summary"], api_key
+                            article["title"], article["summary"]
                         )
                         db.execute("""INSERT OR REPLACE INTO translations
                             (article_id, title, summary, source_language, target_language)

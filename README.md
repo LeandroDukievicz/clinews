@@ -56,14 +56,22 @@ Para cadastrar um site próprio, pressione `a` e cole a URL do site ou do própr
 
 ## Tradução
 
-A tradução é feita sob demanda pela [Google Cloud Translation API v2](https://cloud.google.com/translate). Ative a API em um projeto do Google Cloud e crie uma chave de API. Na primeira vez que pressionar `t` em uma notícia, cole a chave no campo oculto; o clinews a salva somente para seu usuário, com acesso restrito, e a reutiliza nas próximas traduções. Também é possível definir `CLINEWS_GOOGLE_TRANSLATE_API_KEY` antes de iniciar o programa:
+A tradução é feita sob demanda pela [API pública do MyMemory](https://mymemory.translated.net/doc/spec.php). Não precisa de chave nem de cadastro: pressione `t` numa notícia e ela traduz. O idioma de origem é detectado pela própria API, e matéria que já está em português é recusada com um aviso.
+
+A cota é por IP: 5.000 caracteres por dia de forma anônima, ou 50.000 informando um e-mail válido. Para usar a cota maior, defina o e-mail antes de iniciar o programa:
 
 ```bash
-export CLINEWS_GOOGLE_TRANSLATE_API_KEY='sua-chave-do-google-cloud'
+export CLINEWS_MYMEMORY_EMAIL='voce@exemplo.com'
 python3 -m clinews
 ```
 
-O Google Cloud oferece crédito mensal equivalente aos primeiros 500 mil caracteres de tradução; depois disso, o uso é cobrado por caractere conforme a [tabela de preços](https://cloud.google.com/translate/pricing). A API detecta o idioma de origem; o clinews traduz qualquer matéria que não esteja já em português. O idioma é lido do texto mais longo enviado, porque a detecção erra com frequência em títulos curtos. Traduções ficam em cache no banco local, então abrir de novo uma notícia já traduzida não faz outra solicitação. Somente o título e o resumo que vieram no RSS são enviados; artigos cujo feed não fornece resumo continuam limitados ao título. O tempo limite de conexão é de 15 segundos.
+O e-mail também pode ficar salvo em `~/.config/clinews/mymemory-email`, com permissão de leitura apenas para seu usuário.
+
+A API recusa consultas acima de 500 caracteres, então o resumo é quebrado em pedaços que respeitam esse limite — cortando no fim de frase sempre que possível — e remontado depois, com os mesmos parágrafos que o feed mandou. A cota conta caracteres e não requisições, então quebrar não gasta cota a mais.
+
+Traduções ficam em cache no banco local, então abrir de novo uma notícia já traduzida não faz outra solicitação. Somente o título e o resumo que vieram no RSS são enviados; artigos cujo feed não fornece resumo continuam limitados ao título. O tempo limite de conexão é de 15 segundos.
+
+O MyMemory é uma memória de tradução colaborativa: o texto enviado entra no acervo compartilhado dele. Para conteúdo de RSS, que já é público, isso não muda nada — mas vale saber antes de apontar o clinews para um feed privado.
 
 As sugestões incluem fontes em português e inglês de notícias, tecnologia, ciência, economia e cultura. Os endereços vêm das páginas das próprias fontes, como os [feeds da Agência Brasil](https://agenciabrasil.ebc.com.br/feed/), o [feed do Manual do Usuário](https://manualdousuario.net/acompanhe/) e os [feeds da NASA](https://www.nasa.gov/rss-feeds/). A disponibilidade de cada feed é conferida ao adicioná-lo; se um endereço deixar de funcionar, o app mostra o erro e continua com as outras fontes escolhidas.
 
@@ -115,6 +123,6 @@ pacote: trocá-las é manual, no painel da Snap Store.
 
 No Snap, notícias e preferências ficam em `~/snap/clinews/common/`, separados da instalação Python comum e preservados entre revisões. O pacote não importa automaticamente dados da instalação anterior.
 
-O projeto é proprietário e todos os direitos são reservados; veja [LICENSE](LICENSE). A chave da Google Cloud Translation inserida no primeiro uso fica em `~/snap/clinews/common/config/google-translate-api-key` nas instalações Snap, com permissão de leitura e escrita apenas para seu usuário.
+O projeto é proprietário e todos os direitos são reservados; veja [LICENSE](LICENSE). Nas instalações Snap, o e-mail opcional do MyMemory fica em `~/snap/clinews/common/config/mymemory-email`, com permissão de leitura e escrita apenas para seu usuário.
 
 Esta é uma prévia inicial: atualização manual, sem sincronização em segundo plano e sem download da página completa do artigo.

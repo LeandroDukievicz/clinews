@@ -10,7 +10,7 @@ from urllib.error import HTTPError
 
 from clinews.app import add_site, data_path, open_db, parse_feed, prompt, refresh
 from clinews.themes import DEFAULT_THEME, THEMES, config_path, load_theme, nearest_xterm, save_theme, xterm_theme_color
-from clinews.translation import TranslationError, translate_to_portuguese
+from clinews.translation import TranslationError, split_for_api, translate_to_portuguese
 
 
 RSS = b'''<?xml version="1.0"?><rss version="2.0"><channel><title>Noticias de Teste</title>
@@ -139,44 +139,31 @@ class AppTest(unittest.TestCase):
                 self.assertNotEqual(xterm_theme_color(name, "bg"),
                                     xterm_theme_color(name, "surface"))
 
-    def test_google_translation_request_and_response(self):
-        payload = {"data": {"translations": [
-            {"translatedText": "Ciência &amp; tecnologia", "detectedSourceLanguage": "en"},
-            {"translatedText": "Um resumo útil.", "detectedSourceLanguage": "en"},
-        ]}}
-
-        class Response(io.BytesIO):
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *_):
-                self.close()
+    def test_translation_request_and_response(self):
+        payload = {"responseStatus": 200, "responseData": {
+            "translatedText": "Ciência &amp; tecnologia", "detectedLanguage": "en"}}
+        pedidos = []
 
         def fake_open(request, timeout):
             self.assertEqual(timeout, 15)
-            self.assertIn("key=chave-teste", request.full_url)
-            self.assertEqual(request.get_method(), "POST")
-            self.assertEqual(json.loads(request.data), {
-                "q": ["Science & technology", "A useful summary."],
-                "target": "pt-BR", "format": "text",
-            })
-            return Response(json.dumps(payload).encode())
+            pedidos.append(request.full_url)
+            return FakeResponse(json.dumps(payload).encode())
 
-        with patch.dict("os.environ", {"CLINEWS_GOOGLE_TRANSLATE_API_KEY": "chave-teste"}), \
+        with patch.dict("os.environ", {"CLINEWS_MYMEMORY_EMAIL": ""}), \
+                patch("clinews.translation.load_email", return_value=""), \
                 patch("clinews.translation.urlopen", side_effect=fake_open):
-            self.assertEqual(translate_to_portuguese("Science & technology", "A useful summary."),
-                             ("Ciência & tecnologia", "Um resumo útil.", "EN"))
+            titulo, resumo, idioma = translate_to_portuguese("Science & technology", "")
+        self.assertEqual((titulo, resumo, idioma), ("Ciência & tecnologia", "", "EN"))
+        self.assertIn("langpair=Autodetect%7Cpt-BR", pedidos[0])
+        self.assertNotIn("de=", pedidos[0])  # sem e-mail, o parâmetro não vai
 
-    def test_long_api_key_survives_a_narrow_terminal(self):
-        """A chave inteira tem que voltar mesmo quando não cabe na linha."""
-        key = "AIza" + "b" * 35  # 39 caracteres, como as chaves do Google Cloud
-        window = FakeWindow(width=80, keys=[*key, "\n"])
+    def test_long_url_survives_a_narrow_terminal(self):
+        """O endereço inteiro tem que voltar mesmo quando não cabe na linha."""
+        url = "https://exemplo.com.br/secao/" + "a" * 60 + "/feed.xml"
+        window = FakeWindow(width=80, keys=[*url, "\n"])
         with patch("curses.noecho"), patch("curses.curs_set"):
-            typed = prompt(window, " Chave Google Cloud (oculta; Enter confirma, Esc cancela): ",
-                           {"footer": 0}, secret=True)
-        self.assertEqual(typed, key)
-        self.assertFalse([line for line in window.drawn if "AIza" in line],
-                         "a chave não pode aparecer na tela")
+            typed = prompt(window, " URL do site ou RSS: ", {"footer": 0})
+        self.assertEqual(typed, url)
 
     def test_prompt_cancels_with_escape(self):
         window = FakeWindow(width=80, keys=["h", "t", "t", "p", "\x1b"])
@@ -184,51 +171,92 @@ class AppTest(unittest.TestCase):
             self.assertEqual(prompt(window, " URL: ", {"footer": 0}), "")
 
     def test_translation_accepts_languages_other_than_english(self):
-        payload = {"data": {"translations": [
-            {"translatedText": "Uma manchete", "detectedSourceLanguage": "de"},
-            {"translatedText": "Um resumo longo o bastante para a detecção.",
-             "detectedSourceLanguage": "de"},
-        ]}}
-        with patch.dict("os.environ", {"CLINEWS_GOOGLE_TRANSLATE_API_KEY": "chave-teste"}), \
+        payload = {"responseStatus": 200, "responseData": {
+            "translatedText": "Uma manchete", "detectedLanguage": "de"}}
+        with patch("clinews.translation.load_email", return_value=""), \
                 patch("clinews.translation.urlopen", side_effect=fake_response(payload)):
             _, _, detected = translate_to_portuguese("Eine Schlagzeile",
                                                      "Eine ausreichend lange Zusammenfassung.")
         self.assertEqual(detected, "DE")
 
     def test_translation_refuses_text_already_in_portuguese(self):
-        payload = {"data": {"translations": [
-            {"translatedText": "Uma manchete", "detectedSourceLanguage": "pt"},
-            {"translatedText": "Um resumo qualquer, bem mais longo que o título.",
-             "detectedSourceLanguage": "pt-BR"},
-        ]}}
-        with patch.dict("os.environ", {"CLINEWS_GOOGLE_TRANSLATE_API_KEY": "chave-teste"}), \
-                patch("clinews.translation.urlopen", side_effect=fake_response(payload)):
+        """E recusa antes de gastar cota com os pedaços restantes."""
+        payload = {"responseStatus": 200, "responseData": {
+            "translatedText": "Uma manchete", "detectedLanguage": "pt"}}
+        chamadas = []
+
+        def contar(request, timeout):
+            chamadas.append(request.full_url)
+            return fake_response(payload)(request, timeout)
+
+        with patch("clinews.translation.load_email", return_value=""), \
+                patch("clinews.translation.urlopen", side_effect=contar):
             with self.assertRaisesRegex(TranslationError, "já está em português"):
                 translate_to_portuguese("Uma manchete",
                                         "Um resumo qualquer, bem mais longo que o titulo.")
+        self.assertEqual(len(chamadas), 1)
 
-    def test_translation_uses_the_key_received_from_the_prompt(self):
-        """A chave digitada vai direto para a requisição, sem reler o disco."""
-        payload = {"data": {"translations": [{"translatedText": "Oi", "detectedSourceLanguage": "en"}]}}
+    def test_translation_sends_the_optional_email(self):
+        """O e-mail vai no parâmetro `de`, que é o que amplia a cota diária."""
+        payload = {"responseStatus": 200, "responseData": {
+            "translatedText": "Oi", "detectedLanguage": "en"}}
         urls = []
 
         def capture(request, timeout):
             urls.append(request.full_url)
             return fake_response(payload)(request, timeout)
 
-        with patch.dict("os.environ", {"CLINEWS_GOOGLE_TRANSLATE_API_KEY": ""}), \
-                patch("clinews.translation.load_api_key", return_value=""), \
+        with patch("clinews.translation.load_email", return_value=""), \
                 patch("clinews.translation.urlopen", side_effect=capture):
-            translate_to_portuguese("Hi", "", "chave-do-prompt")
-        self.assertIn("key=chave-do-prompt", urls[0])
+            translate_to_portuguese("Hi", "", "eu@exemplo.com")
+        self.assertIn("de=eu%40exemplo.com", urls[0])
 
-    def test_google_translation_reports_api_error(self):
-        error = HTTPError("https://translation.googleapis.com", 403, "Forbidden", {},
-                          io.BytesIO(b'{"error":{"message":"API key not valid"}}'))
-        with patch.dict("os.environ", {"CLINEWS_GOOGLE_TRANSLATE_API_KEY": "chave-teste"}), \
-                patch("clinews.translation.urlopen", side_effect=error):
-            with self.assertRaisesRegex(TranslationError, "403: API key not valid"):
+    def test_translation_explains_an_exhausted_quota(self):
+        payload = {"responseStatus": 403, "quotaFinished": True,
+                   "responseDetails": "YOU USED ALL AVAILABLE FREE TRANSLATIONS FOR TODAY",
+                   "responseData": {"translatedText": "", "detectedLanguage": None}}
+        with patch("clinews.translation.load_email", return_value=""), \
+                patch("clinews.translation.urlopen", side_effect=fake_response(payload)):
+            with self.assertRaisesRegex(TranslationError, "cota diária"):
                 translate_to_portuguese("Hello", "")
+
+    def test_translation_reports_a_refusal(self):
+        payload = {"responseStatus": 403, "responseDetails": "INVALID EMAIL PROVIDED",
+                   "responseData": {"translatedText": "", "detectedLanguage": None}}
+        with patch("clinews.translation.load_email", return_value=""), \
+                patch("clinews.translation.urlopen", side_effect=fake_response(payload)):
+            with self.assertRaisesRegex(TranslationError, "INVALID EMAIL PROVIDED"):
+                translate_to_portuguese("Hello", "")
+
+    def test_summary_is_split_under_the_api_limit(self):
+        """A API recusa acima de 500 caracteres: nenhum pedaço pode passar disso."""
+        frase = "Os pesquisadores publicaram uma analise detalhada das galaxias distantes. "
+        resumo = (frase * 12).strip()
+        self.assertGreater(len(resumo), 500)
+        for pedaco in split_for_api(resumo):
+            with self.subTest(pedaco=pedaco[:40]):
+                self.assertLessEqual(len(pedaco), 500)
+                self.assertTrue(pedaco.strip())
+        # nada se perde na quebra
+        self.assertEqual(" ".join(split_for_api(resumo)).split(), resumo.split())
+
+    def test_split_breaks_a_word_longer_than_the_limit(self):
+        """Um endereço colado no resumo nao tem espaco onde cortar."""
+        gigante = "https://exemplo.com/" + "x" * 900
+        pedacos = split_for_api(gigante)
+        self.assertGreater(len(pedacos), 1)
+        for pedaco in pedacos:
+            self.assertLessEqual(len(pedaco), 500)
+        self.assertEqual("".join(pedacos), gigante)
+
+    def test_summary_keeps_its_paragraphs(self):
+        """O resumo volta com as mesmas linhas que o feed mandou."""
+        payload = {"responseStatus": 200, "responseData": {
+            "translatedText": "traduzido", "detectedLanguage": "en"}}
+        with patch("clinews.translation.load_email", return_value=""), \
+                patch("clinews.translation.urlopen", side_effect=fake_response(payload)):
+            _, resumo, _ = translate_to_portuguese("Title", "First line.\nSecond line.")
+        self.assertEqual(resumo.splitlines(), ["traduzido", "traduzido"])
 
     def test_snap_uses_persistent_user_directory(self):
         with tempfile.TemporaryDirectory() as temp:

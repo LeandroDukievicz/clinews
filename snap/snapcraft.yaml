@@ -1,6 +1,6 @@
 name: clinews
 title: clinews
-version: '0.2.5'
+version: '0.3.0'
 summary: Leia notícias dos seus sites favoritos no terminal
 description: |
   O clinews reúne notícias de feeds RSS e Atom em uma interface para o terminal.
@@ -17,10 +17,11 @@ description: |
   atualização é manual, pelo atalho `r`.
 
   O aplicativo oferece oito temas, as mesmas paletas do WatchAI: WatchAI,
-  Light, Dark, Night Owl, Vampire, Cyberpunk, Steampunk e Grey. Em notícias em outro idioma, o atalho `t` na tela de
-  leitura traduz o título e o resumo para português do Brasil usando a Google
-  Cloud Translation API. Esse recurso é opcional, exige uma chave de API própria
-  e guarda as traduções já feitas no computador.
+  Light, Dark, Night Owl, Vampire, Cyberpunk, Steampunk e Grey.
+
+  Em notícias em outro idioma, o atalho `t` na tela de leitura traduz o título e
+  o resumo para português do Brasil pela API pública do MyMemory, sem chave e
+  sem cadastro. As traduções já feitas ficam guardadas no computador.
 
   O texto disponível depende do conteúdo enviado pelo feed. Quando um site
   fornece apenas um trecho, use o link original para ler a matéria completa.
