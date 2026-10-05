@@ -88,9 +88,20 @@ Para gerar e testar o pacote em uma máquina com Snapcraft e LXD configurados:
 
 ```bash
 snapcraft pack --use-lxd
-sudo snap install --dangerous ./clinews_0.2.4_amd64.snap
+sudo snap install --dangerous ./clinews_0.2.5_amd64.snap
 clinews --demo
 ```
+
+A publicação é automática. O workflow
+[snap.yml](.github/workflows/snap.yml) roda os testes, compila o pacote e envia
+para a loja a cada push na `main`, soltando no canal `edge`. Uma tag `vX.Y.Z`
+publica em `stable`, que é o canal que o público instala — a tag tem que dizer o
+mesmo número que o `version` do `snapcraft.yaml`, e o workflow falha se os dois
+discordarem.
+
+As capturas da galeria da loja ficam em
+[assets/store-screenshots](assets/store-screenshots), mas não viajam dentro do
+pacote: trocá-las é manual, no painel da Snap Store.
 
 No Snap, notícias e preferências ficam em `~/snap/clinews/common/`, separados da instalação Python comum e preservados entre revisões. O pacote não importa automaticamente dados da instalação anterior.
 

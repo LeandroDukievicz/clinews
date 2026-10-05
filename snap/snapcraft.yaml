@@ -1,6 +1,6 @@
 name: clinews
 title: clinews
-version: '0.2.4'
+version: '0.2.5'
 summary: Leia notícias dos seus sites favoritos no terminal
 description: |
   O clinews reúne notícias de feeds RSS e Atom em uma interface para o terminal.
