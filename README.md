@@ -11,17 +11,27 @@ O ícone do aplicativo fica em [assets/clinews-snap-icon.png](assets/clinews-sna
 
 ```text
  CLINEWS  ●  5 não lidas  •  WatchAI
- FONTES (3)                NOTÍCIAS (5)
- Todas as fontes       5    ● Uma nova forma de acompanhar a web
- Tecnologia            2    ● Por que o RSS ainda é útil
- Ciência               2    ● Pesquisadores publicam novos resultados
- Cultura               1    ● O céu desta semana
-                            ● Livros para descobrir neste mês
+ FONTES (3)                   NOTÍCIAS (5)
+ Todas as fontes        5     ● O céu desta semana
+ Ciência                2     ● Por que o RSS ainda é útil
+ Cultura                1     ● Livros para descobrir neste mês
+ Tecnologia             2     ● Pesquisadores publicam novos resultados
+                              ● Uma nova forma de acompanhar a web
 
+ Prévia de demonstração: dados fictícios
  Tab painel  j/k mover  Enter ler  s sugestões  a link  r atualizar  d remover  t temas  q sair
 ```
 
-## Experimentar a prévia
+## Instalar
+
+O clinews está publicado na [Snap Store](https://snapcraft.io/clinews):
+
+```bash
+sudo snap install clinews
+clinews
+```
+
+## Rodar a partir do código
 
 Requer Python 3.10 ou superior. Entre na pasta do projeto:
 
