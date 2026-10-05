@@ -24,16 +24,18 @@ jobs:
       - name: Rodar os testes
         run: PYTHONPATH=. python3 -m unittest tests.test_app
 
-      # A versão mora no snapcraft.yaml, e é ela que a loja recebe. Numa tag as
-      # duas têm que dizer o mesmo número, senão o repositório fica marcando uma
-      # versão que não existe na Snap Store.
+      # A versão mora em dois arquivos e a loja recebe a do snapcraft.yaml.
+      # Numa tag os três têm que dizer o mesmo número, senão o repositório fica
+      # marcando uma versão que não existe na Snap Store.
       - name: Conferir se a tag bate com a versão
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          yaml=$(sed -n "s/^version: *'\(.*\)'/\1/p" snap/snapcraft.yaml)
+          yaml=$(sed -n "s/^version:[[:space:]]*['\"]\{0,1\}\([^'\"]*\)['\"]\{0,1\}[[:space:]]*$/\1/p" snap/snapcraft.yaml)
+          toml=$(sed -n 's/^version[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' pyproject.toml)
           tag=${GITHUB_REF_NAME#v}
-          if [ "$yaml" != "$tag" ]; then
-            echo "snapcraft.yaml diz '$yaml' e a tag diz '$tag'" >&2
+          echo "snapcraft.yaml=$yaml  pyproject.toml=$toml  tag=$tag"
+          if [ -z "$yaml" ] || [ "$yaml" != "$tag" ] || [ "$toml" != "$tag" ]; then
+            echo "::error::versão divergente entre snapcraft.yaml, pyproject.toml e a tag"
             exit 1
           fi
 
@@ -50,3 +52,16 @@ jobs:
         with:
           snap: ${{ steps.build.outputs.snap }}
           release: ${{ startsWith(github.ref, 'refs/tags/v') && 'stable' || 'edge' }}
+
+      # `snapcraft upload` envia só o pacote: resumo, descrição e ícone ficam
+      # para trás. Sem este passo, mudar a descrição no snapcraft.yaml nunca
+      # chega na página da loja. Só numa tag, que é quando o texto publicado
+      # muda de verdade, e com --force porque o painel da loja ganha do
+      # manifesto quando alguém edita por lá.
+      - name: Atualizar a descrição na loja
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: |
+          sudo snap install snapcraft --classic
+          snapcraft upload-metadata "${{ steps.build.outputs.snap }}" --force
