@@ -4,6 +4,8 @@ __pycache__/
 .venv/
 *.db
 *.snap
+build/
+dist/
 parts/
 prime/
 stage/
