@@ -6,40 +6,25 @@ import json
 import os
 from pathlib import Path
 
-DEFAULT_THEME = "Midnight"
+DEFAULT_THEME = "WatchAI"
 
-# As paletas do WatchAI descrevem 16 cores por tema; o clinews usa dez papéis.
-# A correspondência entre os dois é fixa, e é ela que mantém os temas iguais
-# nos dois aplicativos:
+# Os temas são as oito paletas do WatchAI (`src/watchai/theme.py`), com os
+# mesmos nomes e os mesmos valores de cor. O WatchAI descreve dezesseis cores
+# por tema; o clinews desenha dez papéis, e a correspondência entre os dois é
+# fixa — é ela que mantém os temas iguais nos dois aplicativos:
 #
-#     bg -> bg          text -> fg        bg2 -> surface     muted -> muted
-#     cyan -> accent    cyan -> selection (com bg em selected_fg, como realce)
-#     magenta -> accent2    green -> unread    cyan2 -> link
+#     bg -> bg (e selected_fg)      text  -> fg
+#     bg2 -> surface                text2 -> link, só no Grey
+#     cyan -> accent e selection    muted -> muted
+#     cyan2 -> link                 green -> unread
+#     magenta -> accent2
 #
 # `cyan` é o acento do WatchAI (seleção, títulos, teclas) e `green` marca o
-# estado "pronto", que aqui vira a notícia não lida. Toda cor foi conferida em
-# contraste de 4,5:1 contra o fundo em que aparece (test_readable_theme_contrast).
+# estado "pronto", que aqui vira a notícia não lida. A seleção pinta o fundo
+# com o acento porque o clinews não tem a borda que o WatchAI desenha no card.
+# Toda cor foi conferida em contraste de 4,5:1 contra o fundo em que aparece
+# (test_readable_theme_contrast). A ordem é a do seletor do WatchAI.
 THEMES: dict[str, dict[str, str]] = {
-    "NeoTokio": dict(bg="#020624", fg="#8BEFFD", surface="#0A123B", muted="#8AB9C4",
-                      accent="#FF5BD6", accent2="#45E7F5", selection="#D83CB5",
-                      selected_fg="#020624", unread="#FF5BD6", link="#45E7F5"),
-    "OldCity": dict(bg="#211B16", fg="#E8D7B0", surface="#3C3025", muted="#B5A181",
-                     accent="#C88B3A", accent2="#A5693F", selection="#5A4230",
-                     selected_fg="#FFF3D4", unread="#D7B56D", link="#E4B973"),
-    "FullDark": dict(bg="#000000", fg="#A9EFB5", surface="#07150B", muted="#82A88A",
-                      accent="#00FF66", accent2="#AAFF55", selection="#0C3B1D",
-                      selected_fg="#E7FFEA", unread="#00FF66", link="#70FF9B"),
-    "SunMode": dict(bg="#FAFAF7", fg="#202A31", surface="#E9EDEB", muted="#5C686D",
-                     accent="#176A72", accent2="#C48239", selection="#CFE9E9",
-                     selected_fg="#10262A", unread="#137048", link="#0B6675"),
-    "Midnight": dict(bg="#150e2e", fg="#91ebe8", surface="#251445", muted="#89A4BB",
-                     accent="#82AAFF", accent2="#C792EA", selection="#3A275D",
-                     selected_fg="#FFFFFF", unread="#22DA6E", link="#7FDBCA"),
-    "Zenmode": dict(bg="#003d31", fg="#00b3ff", surface="#004639", muted="#9EDCD6",
-                    accent="#6EE7FF", accent2="#7AF0C5", selection="#00B3FF",
-                    selected_fg="#002B23", unread="#62E6A7", link="#67D5FF"),
-
-    # -- as oito paletas do WatchAI ------------------------------------------
     "WatchAI": dict(bg="#05070D", fg="#D8E2F0", surface="#080D16", muted="#7C8799",
                     accent="#00E5FF", accent2="#FF2BD6", selection="#00E5FF",
                     selected_fg="#05070D", unread="#00FF85", link="#00AFC8"),
@@ -61,7 +46,7 @@ THEMES: dict[str, dict[str, str]] = {
     "Steampunk": dict(bg="#140F0A", fg="#EFE2CC", surface="#1F1811", muted="#9A876C",
                       accent="#7FB2A1", accent2="#C9762F", selection="#7FB2A1",
                       selected_fg="#140F0A", unread="#9FB055", link="#5A8A7C"),
-    # Sem matiz: os estados se separam por brilho. O `cyan2` do WatchAI (#7A7A7A)
+    # Sem matiz: os papéis se separam por brilho. O `cyan2` do WatchAI (#7A7A7A)
     # ficaria em 4,5:1 raspando o limite, então o link usa o texto secundário.
     "Grey": dict(bg="#0E0E0E", fg="#E8E8E8", surface="#171717", muted="#8C8C8C",
                  accent="#9C9C9C", accent2="#C2C2C2", selection="#9C9C9C",
@@ -104,14 +89,11 @@ def nearest_xterm(hex_color: str) -> int:
     return min(candidates, key=lambda item: sum((a - b) ** 2 for a, b in zip(rgb, item[1])))[0]
 
 
-# Onde a aproximação de 256 cores perde o desenho do tema: fundos coloridos que
-# viram cinza, ou dois papéis que caem na mesma cor e apagam a diferença entre
-# eles. O Grey é o caso do segundo tipo — fundo e superfície aproximam no mesmo
-# 233, e o cabeçalho sumiria no fundo.
+# Onde a aproximação de 256 cores perde o desenho do tema: dois papéis que caem
+# na mesma cor e apagam a diferença entre eles. O Grey é o único caso entre as
+# paletas do WatchAI — fundo e superfície aproximam no mesmo 233, e o cabeçalho
+# sumiria no fundo.
 XTERM_OVERRIDES: dict[str, dict[str, int]] = {
-    "Midnight": {"bg": 53, "surface": 54, "selection": 60},
-    "NeoTokio": {"bg": 17, "surface": 18},
-    "Zenmode": {"bg": 23, "fg": 81},
     "Grey": {"surface": 234},
 }
 

@@ -10,7 +10,7 @@ As versões para a galeria da Snap Store ficam em [assets/store-screenshots](ass
 O ícone do aplicativo fica em [assets/clinews-snap-icon.png](assets/clinews-snap-icon.png). A interface do terminal abre direto nas fontes e notícias para aproveitar melhor o espaço de leitura.
 
 ```text
- CLINEWS  ●  5 não lidas  •  Midnight
+ CLINEWS  ●  5 não lidas  •  WatchAI
  FONTES (3)                NOTÍCIAS (5)
  Todas as fontes       5    ● Uma nova forma de acompanhar a web
  Tecnologia            2    ● Por que o RSS ainda é útil
@@ -61,18 +61,12 @@ As sugestões incluem fontes em português e inglês de notícias, tecnologia, c
 
 Pressione `t`, escolha com `j`/`k` ou as setas e pressione `Enter`. A prévia muda de cor enquanto você navega. `Esc` cancela. A escolha fica em `~/.config/clinews/config.json` (ou `$XDG_CONFIG_HOME/clinews/config.json`) e também vale para o modo de demonstração.
 
-São catorze temas: seis desenhados para o clinews e as oito paletas do
-[WatchAI](https://github.com/LeandroDukievicz/WatchAI), com os mesmos valores de
-cor nos dois aplicativos.
+São oito temas: as paletas do [WatchAI](https://github.com/LeandroDukievicz/WatchAI),
+com os mesmos nomes e os mesmos valores de cor nos dois aplicativos. O padrão é
+o WatchAI, como lá.
 
 | Tema | Cores |
 | --- | --- |
-| NeoTokio | Fundo azul-escuro `#020624`, com ciano e magenta em estilo cyberpunk |
-| OldCity | Cobre, bronze e sépia, inspirado em steampunk |
-| FullDark | Preto com verdes vivos |
-| SunMode | Fundo branco com texto escuro |
-| Midnight | Fundo roxo-escuro `#150e2e`, texto verde-água `#91ebe8` e destaques azuis e lilases |
-| Zenmode | Fundo verde-escuro `#003d31`, texto azul-ciano `#00b3ff` e destaques claros |
 | WatchAI | Quase preto `#05070D` com ciano elétrico `#00E5FF` e magenta |
 | Light | Fundo branco `#FBFCFD` com texto escuro e acentos em teal |
 | Dark | Cinza-azulado `#0D1117` com ciano suave, no estilo do GitHub escuro |

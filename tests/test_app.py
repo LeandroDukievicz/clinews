@@ -101,22 +101,40 @@ class AppTest(unittest.TestCase):
                 with self.subTest(theme=name, role=f"{role}/surface"):
                     self.assertGreaterEqual(contrast(palette[role], palette["surface"]), 4.5)
 
-    def test_watchai_palettes_available(self):
-        """As oito paletas do WatchAI, com os mesmos valores do outro aplicativo."""
-        for name in ("WatchAI", "Light", "Dark", "Night Owl", "Vampire",
-                     "Cyberpunk", "Steampunk", "Grey"):
+    # As paletas do WatchAI (src/watchai/theme.py), na ordem do seletor dele e
+    # com as cores que o clinews usa: bg, bg2, cyan, cyan2, magenta, green,
+    # text, muted. Copiadas à mão de propósito: é esta tabela que falha quando
+    # um dos dois aplicativos mexe numa cor sem mexer no outro.
+    WATCHAI_PALETTES = {
+        "WatchAI": ("#05070D", "#080D16", "#00E5FF", "#00AFC8", "#FF2BD6", "#00FF85", "#D8E2F0", "#7C8799"),
+        "Light": ("#FBFCFD", "#EFF2F6", "#0A7C8A", "#0E5D67", "#A626A4", "#1A7F37", "#1F2328", "#656D76"),
+        "Dark": ("#0D1117", "#161B22", "#56B6C2", "#3E8A94", "#C678DD", "#56D364", "#E6EDF3", "#8B949E"),
+        "Night Owl": ("#011627", "#0B2942", "#7FDBCA", "#21C7A8", "#C792EA", "#ADDB67", "#D6DEEB", "#8BA1B3"),
+        "Vampire": ("#282A36", "#21222C", "#8BE9FD", "#BD93F9", "#FF79C6", "#50FA7B", "#F8F8F2", "#9AA0BF"),
+        "Cyberpunk": ("#05010A", "#0D0418", "#00F0FF", "#00B8C4", "#FF00A0", "#00FF9F", "#F2E9FF", "#9A86BC"),
+        "Steampunk": ("#140F0A", "#1F1811", "#7FB2A1", "#5A8A7C", "#C9762F", "#9FB055", "#EFE2CC", "#9A876C"),
+        "Grey": ("#0E0E0E", "#171717", "#9C9C9C", "#7A7A7A", "#C2C2C2", "#DADADA", "#E8E8E8", "#8C8C8C"),
+    }
+
+    def test_themes_are_the_watchai_palettes(self):
+        """Os temas são as oito paletas do WatchAI, nome por nome e cor por cor."""
+        self.assertEqual(list(THEMES), list(self.WATCHAI_PALETTES))
+        self.assertEqual(DEFAULT_THEME, "WatchAI")  # a paleta padrão do WatchAI
+        for name, palette in self.WATCHAI_PALETTES.items():
+            bg, bg2, cyan, cyan2, magenta, green, text, muted = palette
             with self.subTest(theme=name):
-                self.assertIn(name, THEMES)
-        self.assertEqual(THEMES["WatchAI"]["bg"], "#05070D")
-        self.assertEqual(THEMES["WatchAI"]["accent"], "#00E5FF")
-        self.assertEqual(THEMES["Cyberpunk"]["unread"], "#00FF9F")
-        self.assertEqual(THEMES["Vampire"]["accent"], "#8BE9FD")
+                self.assertEqual(THEMES[name], dict(
+                    bg=bg, fg=text, surface=bg2, muted=muted,
+                    accent=cyan, accent2=magenta, selection=cyan,
+                    selected_fg=bg, unread=green,
+                    # O cyan2 do Grey raspa o limite de contraste; lá o link usa
+                    # o texto secundário da mesma paleta.
+                    link="#BDBDBD" if name == "Grey" else cyan2,
+                ))
 
     def test_header_stays_visible_in_256_colors(self):
         """Fundo e superfície não podem cair na mesma cor aproximada."""
         for name in THEMES:
-            if name == "Zenmode":
-                continue  # colisão anterior às paletas do WatchAI
             with self.subTest(theme=name):
                 self.assertNotEqual(xterm_theme_color(name, "bg"),
                                     xterm_theme_color(name, "surface"))
@@ -232,12 +250,8 @@ class AppTest(unittest.TestCase):
     def test_xterm_color_approximation(self):
         self.assertEqual(nearest_xterm("#000000"), 16)
         self.assertEqual(nearest_xterm("#FFFFFF"), 231)
-        self.assertEqual(xterm_theme_color("Midnight", "bg"), 53)
-        self.assertEqual(xterm_theme_color("Midnight", "surface"), 54)
-        self.assertEqual(xterm_theme_color("NeoTokio", "bg"), 17)
-        self.assertEqual(xterm_theme_color("NeoTokio", "surface"), 18)
-        self.assertEqual(xterm_theme_color("Zenmode", "bg"), 23)
-        self.assertEqual(xterm_theme_color("Zenmode", "fg"), 81)
+        self.assertEqual(xterm_theme_color("WatchAI", "accent"), 45)
+        self.assertEqual(xterm_theme_color("Cyberpunk", "accent"), 51)
         self.assertEqual(xterm_theme_color("Grey", "surface"), 234)
 
     def test_atom_feed(self):
